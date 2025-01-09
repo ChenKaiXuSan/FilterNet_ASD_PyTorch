@@ -1,0 +1,66 @@
+# hydra config
+hydra:
+  run:
+    dir: /workspace/skeleton/logs/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: /workspace/skeleton/logs/
+    subdir: ${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+optimizer:
+  lr: 0.0001
+  beta1: 0.5
+  beta2: 0.999
+
+data:
+  seg_data_path: /workspace/data/segmentation_dataset_512/ # segmentation dataset path
+  gait_seg_data_path: /workspace/data/segmentation_dataset_512/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset. 
+  gait_seg_index_data_path: /workspace/data/seg_gait_index_mapping/ # training mapping path, this used for cross validation, with different class number.
+
+  num_workers: 4
+  img_size: 224
+  sampling: "over" # over, under, none
+
+  gait_cycle_batch_size: 1 # this used for gait cycle defined method. 
+  default_batch_size: 32  # this used for default method, without gait cycle defined method.
+
+model:
+  model: ${train.backbone} # the model name
+  model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
+  model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
+
+YOLO:
+  pose_ckpt: "ckpt/yolov8x-pose.pt"
+  seg_ckpt: "ckpt/yolov8x-seg.pt"
+  bbox_ckpt: "ckpt/yolov8x.pt"
+  conf: 0.8
+  iou: 0.5
+  verbose: False
+
+train:
+  # Training config
+  max_epochs: 50 # numer of epochs of training
+
+  # used for val 
+  clip_duration: 1 # clip duration for the video
+  uniform_temporal_subsample_num: 8 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
+
+  # experiment: two_stream, cnn_lstm, cnn, 3dcnn
+  # ablation study 1: temporal_mix, late_fusion, single_stance, single_swing, single_random, < only for 3D CNN
+  # ablation study 2: non-periodicity_ratio, asymmetric_ratio, none
+  # non-periodicity ratio: 0.3, 0.6
+  # asymmetric ratio: 0.3, 0.6
+  backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream, 3dcnn_atn], help='the backbone of the model'
+  temporal_mix: True # if use the temporal mix
+  periodicity_symmetric: none # non-periodicity_ratio, asymmetric_ratio, none. ratio for non-periodicity and asymmetric
+
+  experiment: ${train.backbone}_${train.temporal_mix}_${train.periodicity_symmetric} # the experiment name
+
+  gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
+
+  # Transfer_learning
+  transfer_learning: True # if use the transformer learning
+
+  log_path: logs/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+  fast_dev_run: False # if use the fast_dev_run
+  fold: 3 # the fold number of the cross validation
