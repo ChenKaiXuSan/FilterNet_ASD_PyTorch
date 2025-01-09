@@ -5,6 +5,16 @@
       "type": "debugpy",
       "request": "launch",
       "module": "enter-your-module-name"
+    },
+    {
+      "name": "filter_train",
+      "type": "debugpy",
+      "request": "launch",  
+      "module": "project.filter_main",
+      "justMyCode": true,
+      "args": [
+        // "train"
+      ]
     }
   ]
 }

@@ -28,14 +28,6 @@ model:
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
-YOLO:
-  pose_ckpt: "ckpt/yolov8x-pose.pt"
-  seg_ckpt: "ckpt/yolov8x-seg.pt"
-  bbox_ckpt: "ckpt/yolov8x.pt"
-  conf: 0.8
-  iou: 0.5
-  verbose: False
-
 train:
   # Training config
   max_epochs: 50 # numer of epochs of training
