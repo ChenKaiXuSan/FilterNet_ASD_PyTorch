@@ -1,11 +1,8 @@
 # hydra config
 hydra:
   run:
-    dir: /workspace/project/logs/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  sweep:
-    dir: /workspace/project/logs/
-    subdir: ${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-
+    dir: /workspace/project/${train.log_path}
+  
 optimizer:
   lr: 0.0001
   beta1: 0.5
@@ -41,18 +38,17 @@ train:
   # ablation study 2: non-periodicity_ratio, asymmetric_ratio, none
   # non-periodicity ratio: 0.3, 0.6
   # asymmetric ratio: 0.3, 0.6
-  backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream, 3dcnn_atn], help='the backbone of the model'
+  backbone: 2dcnn # choices=[3dcnn, 2dcnn], help='the backbone of the model'
   temporal_mix: True # if use the temporal mix
-  periodicity_symmetric: none # non-periodicity_ratio, asymmetric_ratio, none. ratio for non-periodicity and asymmetric
-
-  experiment: ${train.backbone}_${train.temporal_mix}_${train.periodicity_symmetric} # the experiment name
+  phase: stance # choices=[stance, swing, whole], help='the phase of the gait cycle'
+  experiment: ${train.backbone}_${train.phase} # the experiment name
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
   # Transfer_learning
   transfer_learning: True # if use the transformer learning
 
-  log_path: logs/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  log_path: logs/filter/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
   fold: 3 # the fold number of the cross validation

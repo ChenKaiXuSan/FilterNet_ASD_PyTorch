@@ -64,13 +64,10 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     seed_everything(42, workers=True)
 
-    # * select experiment
     if hparams.train.backbone == "3dcnn":
         pass
-    # * compare experiment
     elif hparams.train.backbone == "2dcnn":
         classification_module = CNNModule(hparams)
-
     else:
         raise ValueError("the experiment backbone is not supported.")
 

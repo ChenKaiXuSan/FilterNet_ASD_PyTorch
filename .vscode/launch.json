@@ -13,7 +13,7 @@
       "module": "project.filter_main",
       "justMyCode": true,
       "args": [
-        // "train"
+        "data.num_workers=0",
       ]
     }
   ]
