@@ -29,14 +29,16 @@ from __future__ import annotations
 
 import logging, sys, json
 
-sys.path.append("/workspace/skeleton")
+sys.path.append("/workspace/project")
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
 import torch
 
 from torchvision.io import read_video, write_png
-from pytorchvideo.transforms.functional import uniform_temporal_subsample
+# from pytorchvideo.transforms.functional import uniform_temporal_subsample
+from torchvision.transforms.v2.functional import uniform_temporal_subsample_video, uniform_temporal_subsample
+
 
 logger = logging.getLogger(__name__)
 

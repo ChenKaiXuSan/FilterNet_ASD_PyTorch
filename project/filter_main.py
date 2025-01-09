@@ -48,7 +48,6 @@ from project.trainer.train_cnn import CNNModule
 
 
 from project.cross_validation import DefineCrossValidation
-from project.helper import save_helper
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -142,7 +141,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     config_name="filter_config.yaml",
 )
 def init_params(config):
-    
+
     #######################
     # prepare dataset index
     #######################
