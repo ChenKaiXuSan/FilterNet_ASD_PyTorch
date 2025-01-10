@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Thursday January 9th 2025 12:29:05 pm
+Last Modified: Friday January 10th 2025 9:08:20 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -44,11 +44,10 @@ from project.dataloader.data_loader import WalkDataModule
 # 3D CNN model
 
 # compare experiment
-from project.step1_filter.trainer.train_cnn import CNNModule
+from project.trainer.train_3dcnn import MakeVideoModule
 
 
-from project.step1_filter.cross_validation import DefineCrossValidation
-from project.project.utils.helper import save_helper
+from project.cross_validation import DefineCrossValidation
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -151,25 +150,10 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         ckpt_path="best",
     )
 
-    # TODO: this step move to trainer.test() method.
-    # if hparams.train.backbone == "3dcnn_atn":
-    #     pass
-    # else:
-    #     # save_helper(hparams, classification_module, data_module, fold) #! debug only
-    #     save_helper(
-    #         hparams,
-    #         classification_module.load_from_checkpoint(
-    #             trainer.checkpoint_callback.best_model_path
-    #         ),
-    #         data_module,
-    #         fold,
-    #     )
-
-
 @hydra.main(
     version_base=None,
     config_path="../configs",  # * the config_path is relative to location of the python script
-    config_name="config.yaml",
+    config_name="phase_mix_config.yaml",
 )
 def init_params(config):
     #######################

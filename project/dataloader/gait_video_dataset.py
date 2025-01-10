@@ -1,35 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-"""
-File: /workspace/skeleton/project/dataloader/gait_video_dataset.py
-Project: /workspace/skeleton/project/dataloader
-Created Date: Monday December 11th 2023
+'''
+File: /workspace/project/project/dataloader/gait_video_dataset.py
+Project: /workspace/project/project/dataloader
+Created Date: Friday January 10th 2025
 Author: Kaixu Chen
 -----
 Comment:
 
 Have a good code time :)
 -----
-Last Modified: Monday December 11th 2023 11:26:34 am
+Last Modified: Friday January 10th 2025 9:08:20 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
-Copyright (c) 2023 The University of Tsukuba
+Copyright (c) 2025 The University of Tsukuba
 -----
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-
-27-06-2024	Kaixu Chen 增加asymmetric和nonperiodicity的对比方法。
-                        都是对stance phase进行处理。其中asymmetric可以根据比例进行破坏。
-
-27-03-2024	Kaixu Chen	make temporal mix a separate class.
-"""
+'''
 
 from __future__ import annotations
 
-import logging, sys, json
-
-sys.path.append("/workspace/project")
+import logging
+import json
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
@@ -38,7 +32,6 @@ import torch
 from torchvision.io import read_video, write_png
 # from pytorchvideo.transforms.functional import uniform_temporal_subsample
 from torchvision.transforms.v2.functional import uniform_temporal_subsample_video, uniform_temporal_subsample
-
 
 logger = logging.getLogger(__name__)
 
@@ -274,8 +267,8 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         bbox_none_index = file_info_dict["none_index"]
         bbox = file_info_dict["bbox"]
 
-        # print(f"video name: {video_name}, gait cycle index: {gait_cycle_index}")
 
+        # TODO: here should judge the frame with pre-trained model.
         if "True" in self._experiment:
             # should return the new frame, named temporal mix.
             defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox)

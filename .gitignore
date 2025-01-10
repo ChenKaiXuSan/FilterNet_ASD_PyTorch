@@ -128,5 +128,5 @@ lightning_logs/
 MNIST
 .DS_Store
 
-logs/
 /logs
+/ckpt

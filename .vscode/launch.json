@@ -17,6 +17,18 @@
         "train.gpu_num=1",
         "train.backbone=2dcnn"
       ]
+    },
+    {
+      "name": "filter_phase_mix_train",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "project.phasemix_main",
+      "justMyCode": true,
+      "args": [
+        "data.num_workers=0",
+        "train.gpu_num=1",
+        "train.backbone=3dcnn"
+      ]
     }
   ]
 }

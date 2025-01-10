@@ -36,7 +36,7 @@ from pytorch_lightning.callbacks import (
 )
 
 from project.dataloader.filter_data_loader import WalkDataModule
-from project.trainer.train_cnn import CNNModule
+from project.trainer.train_filter import CNNModule
 from project.cross_validation import DefineCrossValidation
 
 
