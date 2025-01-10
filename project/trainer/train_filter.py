@@ -47,12 +47,13 @@ class CNNModule(LightningModule):
         # return model type name
         self.lr = hparams.optimizer.lr
         self.num_classes = hparams.model.model_class_num
+        self.model_type = hparams.model.model
 
         # model define
         # model = MakeImageModule(hparams)
         # self.model = model.make_resnet(self.num_classes)
 
-        self.model = self.init_model(hparams, hparams.model.model, self.num_classes)
+        self.model = self.init_model(hparams, self.model_type, self.num_classes)
 
         # save the hyperparameters to the file and ckpt
         self.save_hyperparameters()
@@ -100,22 +101,44 @@ class CNNModule(LightningModule):
         video = video.permute(1, 0, 2, 3)
         t, c, h, w = video.size()
 
-        if t > 128:
-            for i in range(0, c, 128):  # 128 is the batch size
-                preds = self.model(video[i : i + 128, ...])
+        _batch_size = 64
 
-                loss = F.cross_entropy(
-                    preds.squeeze(dim=-1), label[i : i + 128].long()
-                )
-                self.save_log(preds, label[i : i + 128], loss)
+        if t > _batch_size:
+
+            for i in range(0, t, _batch_size):  # 128 is the batch size
+                preds = self.model(video[i : i + _batch_size, ...])
+                _label = label[i : i + _batch_size].long()
+                loss = F.cross_entropy(preds.squeeze(dim=-1), _label)
+            
+                self.train_batch_end(preds, loss, _label)
         else:
             preds = self.model(video)
 
             loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
-            self.save_log(preds, label, loss)
+            self.train_batch_end(preds, loss, label)
 
         return loss
+
+    def train_batch_end(self, preds, loss, label):
+
+        self.log("filter_train/loss", loss, on_epoch=True, on_step=True, batch_size=label.size()[0])
+
+        # log metrics
+        video_acc = self._accuracy(preds, label)
+        video_precision = self._precision(preds, label)
+        video_recall = self._recall(preds, label)
+        video_f1_score = self._f1_score(preds, label)
+        video_confusion_matrix = self._confusion_matrix(preds, label)
+
+        metric_dict = {
+            "filter_train/acc": video_acc,
+            "filter_train/precision": video_precision,
+            "filter_train/recall": video_recall,
+            "filter_train/f1_score": video_f1_score,
+        }
+        self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=label.size()[0])
+
 
     def validation_step(self, batch, batch_idx):
         """
@@ -141,7 +164,29 @@ class CNNModule(LightningModule):
 
         loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
-        self.save_log(preds, label, loss)
+        return loss, preds
+    
+    def on_validation_batch_end(self, outputs, batch, batch_idx):
+
+        loss, preds = outputs
+        label = batch["label"].detach()
+
+        self.log("filter_val/loss", loss, on_epoch=True, on_step=True, batch_size=label.size()[0])
+
+        # log metrics
+        video_acc = self._accuracy(preds, label)
+        video_precision = self._precision(preds, label)
+        video_recall = self._recall(preds, label)
+        video_f1_score = self._f1_score(preds, label)
+        video_confusion_matrix = self._confusion_matrix(preds, label)
+
+        metric_dict = {
+            "filter_val/acc": video_acc,
+            "filter_val/precision": video_precision,
+            "filter_val/recall": video_recall,
+            "filter_val/f1_score": video_f1_score,
+        }
+        self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=label.size()[0])
 
     def configure_optimizers(self):
         """
@@ -161,73 +206,6 @@ class CNNModule(LightningModule):
                 "monitor": "val/loss",
             },
         }
-
-    def _get_name(self):
-        return self.model_type
-
-    def save_log(self, pred: torch.Tensor, label: torch.Tensor, loss):
-
-        if self.training:
-            preds = pred
-
-            # when torch.size([1]), not squeeze.
-            if preds.size()[0] != 1 or len(preds.size()) != 1:
-                preds = preds.squeeze(dim=-1)
-                pred_softmax = torch.softmax(preds, dim=-1)
-            else:
-                pred_softmax = torch.softmax(preds)
-
-            # video rgb metrics
-            accuracy = self._accuracy(pred_softmax, label)
-            precision = self._precision(pred_softmax, label)
-            recall = self._recall(pred_softmax, label)
-            f1_score = self._f1_score(pred_softmax, label)
-            confusion_matrix = self._confusion_matrix(pred_softmax, label)
-
-            # log to tensorboard
-            self.log_dict(
-                {
-                    "train/loss": loss,
-                    "train/video_acc": accuracy,
-                    "train/video_precision": precision,
-                    "train/video_recall": recall,
-                    "train/video_f1_score": f1_score,
-                },
-                on_epoch=True,
-                on_step=True,
-                batch_size=label.size()[0],
-            )
-
-        else:
-            preds = pred
-
-            # when torch.size([1]), not squeeze.
-            if preds.size()[0] != 1 or len(preds.size()) != 1:
-                preds = preds.squeeze(dim=-1)
-                pred_softmax = torch.sigmoid(preds)
-            else:
-                pred_softmax = torch.sigmoid(preds)
-
-            # video rgb metrics
-            accuracy = self._accuracy(pred_softmax, label)
-            precision = self._precision(pred_softmax, label)
-            recall = self._recall(pred_softmax, label)
-            f1_score = self._f1_score(pred_softmax, label)
-            confusion_matrix = self._confusion_matrix(pred_softmax, label)
-
-            # log to tensorboard
-            self.log_dict(
-                {
-                    "val/loss": loss,
-                    "val/video_acc": accuracy,
-                    "val/video_precision": precision,
-                    "val/video_recall": recall,
-                    "val/video_f1_score": f1_score,
-                },
-                on_epoch=True,
-                on_step=True,
-                batch_size=label.size()[0],
-            )
 
     ##############
     # test step
@@ -259,9 +237,12 @@ class CNNModule(LightningModule):
         with torch.no_grad():
             preds = self.model(video)
 
+        if len(preds.size()) == 1:
+            preds = preds.unsqueeze(0)
+    
         loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
-        self.log("test/loss", loss, on_epoch=True, on_step=True, batch_size=video.size()[0])
+        self.log("filter_test/loss", loss, on_epoch=True, on_step=True, batch_size=video.size()[0])
 
         # log metrics
         video_acc = self._accuracy(preds, label)
@@ -271,10 +252,10 @@ class CNNModule(LightningModule):
         video_confusion_matrix = self._confusion_matrix(preds, label)
 
         metric_dict = {
-            "test/video_acc": video_acc,
-            "test/video_precision": video_precision,
-            "test/video_recall": video_recall,
-            "test/video_f1_score": video_f1_score,
+            "filter_test/acc": video_acc,
+            "filter_test/precision": video_precision,
+            "filter_test/recall": video_recall,
+            "filter_test/f1_score": video_f1_score,
         }
         self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=video.size()[0])
 

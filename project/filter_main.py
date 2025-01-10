@@ -78,9 +78,9 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     # define the checkpoint becavier.
     model_check_point = ModelCheckpoint(
-        filename="{epoch}-{val/loss:.2f}-{val/video_acc:.4f}",
+        filename="{epoch}-{filter_val/loss:.2f}-{filter_val/acc:.4f}",
         auto_insert_metric_name=False,
-        monitor="val/video_acc",
+        monitor="filter_val/acc",
         mode="max",
         save_last=False,
         save_top_k=2,
@@ -88,7 +88,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     # define the early stop.
     early_stopping = EarlyStopping(
-        monitor="val/video_acc",
+        monitor="filter_val/acc",
         patience=3,
         mode="max",
     )

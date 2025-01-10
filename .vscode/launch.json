@@ -14,7 +14,7 @@
       "justMyCode": true,
       "args": [
         "data.num_workers=0",
-        "train.gpu_num=1",
+        "train.gpu_num=0",
         "train.backbone=2dcnn"
       ]
     },
@@ -26,7 +26,7 @@
       "justMyCode": true,
       "args": [
         "data.num_workers=0",
-        "train.gpu_num=1",
+        "train.gpu_num=0",
         "train.backbone=3dcnn"
       ]
     }

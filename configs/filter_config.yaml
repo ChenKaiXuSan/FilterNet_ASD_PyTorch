@@ -1,7 +1,9 @@
 # hydra config
 hydra:
+  output_subdir: ${train.log_path}/.hydra
   run:
-    dir: /workspace/project/${train.log_path}
+    dir: .
+
   
 optimizer:
   lr: 0.0001
