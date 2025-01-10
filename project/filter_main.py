@@ -69,6 +69,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     tb_logger = TensorBoardLogger(
         save_dir=os.path.join(hparams.train.log_path),
         name=str(fold),  # here should be str type.
+        default_hp_metric=False,
     )
 
     # some callbacks

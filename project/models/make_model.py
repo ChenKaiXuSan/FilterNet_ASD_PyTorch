@@ -29,6 +29,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from pytorchvideo.models import resnet
+from torchvision.models import resnet101, ResNet101_Weights
 from torchvision.models import vit_l_32, ViT_L_32_Weights
 
 class MakeVideoModule(nn.Module):
@@ -67,13 +68,6 @@ class MakeVideoModule(nn.Module):
 
         return slow
 
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-
-        if self.model_name == "resnet":
-            return self.initialize_walk_resnet()
-        else:
-            raise KeyError(f"the model name {self.model_name} is not in the model zoo")
-
 class MakeImageModule(nn.Module):
     '''
     the module zoo from the torchvision lib, to make the different 2D model.
@@ -89,18 +83,12 @@ class MakeImageModule(nn.Module):
 
     def make_resnet(self, input_channel:int = 3) -> nn.Module:
 
-        model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet50', pretrained=True)
+        model = resnet101(weights=ResNet101_Weights.DEFAULT)
+
         model.conv1 = nn.Conv2d(input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
         model.fc = nn.Linear(2048, self.model_class_num)
     
         return model
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-
-        if self.model_name == "resnet":
-            return self.make_resnet()
-        else:
-            raise KeyError(f"the model name {self.model_name} is not in the model zoo")
 
 class MakeViTModule(nn.Module):
 
