@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-'''
+"""
 File: /workspace/project/project/dataloader/data_loader.py
 Project: /workspace/project/project/dataloader
 Created Date: Thursday January 9th 2025
@@ -18,12 +18,13 @@ Copyright (c) 2025 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-'''
+"""
 
 from torchvision.transforms import (
     Compose,
     Resize,
 )
+
 # from pytorchvideo.transforms import (
 #     ApplyTransformToKey,
 #     UniformTemporalSubsample,
@@ -50,6 +51,7 @@ disease_to_num_mapping_Dict: Dict = {
     3: {"ASD": 0, "DHS": 1, "LCS_HipOA": 2},
     4: {"ASD": 0, "DHS": 1, "LCS_HipOA": 2, "normal": 3},
 }
+
 
 class ApplyTransformToKey:
     """
@@ -89,18 +91,14 @@ class Div255(torch.nn.Module):
         Returns:
             x (Tensor): Scaled tensor by dividing 255.
         """
-        return  x / 255.0
+        return x / 255.0
+
 
 class WalkDataModule(LightningDataModule):
     def __init__(self, opt, dataset_idx: Dict = None):
         super().__init__()
 
-        # self._seg_path = opt.data.seg_data_path
-        # self._gait_seg_path = opt.data.gait_seg_data_path
-
-        # ? 感觉batch size对最后的结果有影响，所以分开使用不同的batch size
         self._gait_cycle_batch_size = opt.data.gait_cycle_batch_size
-        self._default_batch_size = opt.data.default_batch_size
 
         self._NUM_WORKERS = opt.data.num_workers
         self._IMG_SIZE = opt.data.img_size
@@ -115,9 +113,8 @@ class WalkDataModule(LightningDataModule):
 
         self._experiment = opt.train.experiment
         self._backbone = opt.train.backbone
-        self._temporal_mix = opt.train.temporal_mix
 
-        if self._temporal_mix == True:
+        if "2dcnn" in self._backbone or "vit" in self._backbone:
             self.mapping_transform = Compose(
                 [Div255(), Resize(size=[self._IMG_SIZE, self._IMG_SIZE])]
             )
@@ -248,6 +245,7 @@ class WalkDataModule(LightningDataModule):
             dict: {video: torch.tensor, label: torch.tensor, info: list}
         """
 
+        # ! why here need to unpack the batch data, maybe can deprecated.
         batch_label = []
         batch_video = []
 
@@ -270,10 +268,6 @@ class WalkDataModule(LightningDataModule):
                     batch_label.append(
                         disease_to_num_mapping_Dict[self._class_num]["non-ASD"]
                     )
-
-        # video, b, c, t, h, w, which include the video frame from sample info
-        # label, b, which include the video frame from sample info
-        # sample info, the raw sample info from dataset
 
         assert t == len(batch_label)
 
@@ -311,10 +305,10 @@ class WalkDataModule(LightningDataModule):
 
         val_data_loader = DataLoader(
             self.val_gait_dataset,
-            batch_size = self._gait_cycle_batch_size, 
+            batch_size=self._gait_cycle_batch_size,
             num_workers=self._NUM_WORKERS,
             pin_memory=True,
-            shuffle=True,
+            shuffle=False,
             drop_last=True,
             collate_fn=self.collate_fn,
         )
@@ -333,7 +327,7 @@ class WalkDataModule(LightningDataModule):
             batch_size=self._gait_cycle_batch_size,
             num_workers=self._NUM_WORKERS,
             pin_memory=True,
-            shuffle=True,
+            shuffle=False,
             drop_last=True,
             collate_fn=self.collate_fn,
         )

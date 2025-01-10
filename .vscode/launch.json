@@ -14,6 +14,8 @@
       "justMyCode": true,
       "args": [
         "data.num_workers=0",
+        "train.gpu_num=1",
+        "train.backbone=vit"
       ]
     }
   ]

@@ -18,7 +18,6 @@ data:
   sampling: "over" # over, under, none
 
   gait_cycle_batch_size: 1 # this used for gait cycle defined method. 
-  default_batch_size: 32  # this used for default method, without gait cycle defined method.
 
 model:
   model: ${train.backbone} # the model name
@@ -29,26 +28,18 @@ train:
   # Training config
   max_epochs: 50 # numer of epochs of training
 
-  # used for val 
+  # used for 3d cnn
   clip_duration: 1 # clip duration for the video
   uniform_temporal_subsample_num: 8 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
 
-  # experiment: two_stream, cnn_lstm, cnn, 3dcnn
-  # ablation study 1: temporal_mix, late_fusion, single_stance, single_swing, single_random, < only for 3D CNN
-  # ablation study 2: non-periodicity_ratio, asymmetric_ratio, none
-  # non-periodicity ratio: 0.3, 0.6
-  # asymmetric ratio: 0.3, 0.6
+  # experiment: cnn, 3dcnn, vit
   backbone: 2dcnn # choices=[3dcnn, 2dcnn], help='the backbone of the model'
-  temporal_mix: True # if use the temporal mix
   phase: stance # choices=[stance, swing, whole], help='the phase of the gait cycle'
   experiment: ${train.backbone}_${train.phase} # the experiment name
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
-  # Transfer_learning
-  transfer_learning: True # if use the transformer learning
-
-  log_path: logs/filter/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  log_path: logs/filter/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
   fold: 3 # the fold number of the cross validation

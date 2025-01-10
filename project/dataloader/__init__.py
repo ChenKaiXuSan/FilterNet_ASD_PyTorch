@@ -1,24 +1,24 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
 '''
-File: __init__.py
-Project: dataloader
-Created Date: 2023-10-19 02:24:37
-Author: chenkaixu
+File: /workspace/project/project/dataloader/__init__.py
+Project: /workspace/project/project/dataloader
+Created Date: Thursday January 9th 2025
+Author: Kaixu Chen
 -----
 Comment:
- The init file for the dataloader module.
- 
-Have a good code time!
+
+Have a good code time :)
 -----
 Last Modified: Thursday January 9th 2025 12:29:05 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
+Copyright (c) 2025 The University of Tsukuba
+-----
 HISTORY:
-Date 	By 	Comments
-------------------------------------------------
-
-26-11-2024	Kaixu Chen	refactor the code
-
+Date      	By	Comments
+----------	---	---------------------------------------------------------
 '''
 
-from project.dataloader.data_loader import *
+from project.dataloader.filter_data_loader import *
 from project.dataloader.gait_video_dataset import *

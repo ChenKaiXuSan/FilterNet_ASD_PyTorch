@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-'''
+"""
 File: /workspace/project/project/main.py
 Project: /workspace/project/project
 Created Date: Thursday January 9th 2025
@@ -18,7 +18,7 @@ Copyright (c) 2025 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-'''
+"""
 
 import os
 import logging
@@ -35,18 +35,8 @@ from pytorch_lightning.callbacks import (
     LearningRateMonitor,
 )
 
-from project.dataloader.data_loader import WalkDataModule
-
-#####################################
-# select different experiment trainer
-#####################################
-
-# 3D CNN model
-
-# compare experiment
+from project.dataloader.filter_data_loader import WalkDataModule
 from project.trainer.train_cnn import CNNModule
-
-
 from project.cross_validation import DefineCrossValidation
 
 
@@ -67,6 +57,8 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     if hparams.train.backbone == "3dcnn":
         pass
     elif hparams.train.backbone == "2dcnn":
+        classification_module = CNNModule(hparams)
+    elif hparams.train.backbone == "vit":
         classification_module = CNNModule(hparams)
     else:
         raise ValueError("the experiment backbone is not supported.")

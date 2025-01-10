@@ -35,7 +35,7 @@ from pytorch_lightning.callbacks import (
     LearningRateMonitor,
 )
 
-from project.step1_filter.dataloader.data_loader import WalkDataModule
+from project.dataloader.data_loader import WalkDataModule
 
 #####################################
 # select different experiment trainer
@@ -48,7 +48,7 @@ from project.step1_filter.trainer.train_cnn import CNNModule
 
 
 from project.step1_filter.cross_validation import DefineCrossValidation
-from project.helper import save_helper
+from project.project.utils.helper import save_helper
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
