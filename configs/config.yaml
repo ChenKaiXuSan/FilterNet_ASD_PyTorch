@@ -1,7 +1,0 @@
-# hydra config
-hydra:
-  run:
-    dir: /workspace/skeleton/logs/${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  sweep:
-    dir: /workspace/skeleton/logs/
-    subdir: ${train.experiment}/${train.clip_duration}_${train.uniform_temporal_subsample_num}/${now:%Y-%m-%d}/${now:%H-%M-%S}

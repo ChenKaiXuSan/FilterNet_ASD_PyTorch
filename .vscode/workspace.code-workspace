@@ -1,8 +1,12 @@
 {
 	"folders": [
 		{
-			"name": "skeleton",
+			"name": "filter_phase_mix",
 			"path": "/workspace/project"
 		},
+		{
+			"name": "data",
+			"path": "/workspace/data"
+		}
 	]
 }

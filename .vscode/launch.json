@@ -5,6 +5,18 @@
       "type": "debugpy",
       "request": "launch",
       "module": "enter-your-module-name"
+    },
+    {
+      "name": "filter_train",
+      "type": "debugpy",
+      "request": "launch",  
+      "module": "project.filter_main",
+      "justMyCode": true,
+      "args": [
+        "data.num_workers=0",
+        "train.gpu_num=1",
+        "train.backbone=2dcnn"
+      ]
     }
   ]
 }
