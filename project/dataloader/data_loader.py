@@ -165,7 +165,7 @@ class WalkDataModule(LightningDataModule):
                 transform=self.mapping_transform,
             )
 
-        else:
+        else: # ? in this experiment, do not use the whole dataset.
 
             if "single" in self._backbone:
 

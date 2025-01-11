@@ -44,8 +44,7 @@ from project.dataloader.data_loader import WalkDataModule
 # 3D CNN model
 
 # compare experiment
-from project.trainer.train_3dcnn import MakeVideoModule
-
+from project.trainer.train_3dcnn import TemporalMixModule
 
 from project.cross_validation import DefineCrossValidation
 
@@ -66,26 +65,17 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     # * select experiment
     if hparams.train.backbone == "3dcnn":
-        # * ablation study 2: different training strategy
-        if "late_fusion" in hparams.train.experiment:
-            classification_module = LateFusionModule(hparams)
-        elif "single" in hparams.train.experiment:
-            classification_module = SingleModule(hparams)
-        elif hparams.train.temporal_mix:
-            classification_module = TemporalMixModule(hparams)
-        else:
-            raise ValueError(f"the {hparams.train.experiment} is not supported.")
-    elif hparams.train.backbone == "3dcnn_atn":
-        classification_module = BackboneATNModule(hparams)
+        classification_module = TemporalMixModule(hparams)
+    # TODO: add other experiment
     # * compare experiment
-    elif hparams.train.backbone == "two_stream":
-        classification_module = TwoStreamModule(hparams)
-    # * compare experiment
-    elif hparams.train.backbone == "cnn_lstm":
-        classification_module = CNNLstmModule(hparams)
-    # * compare experiment
-    elif hparams.train.backbone == "2dcnn":
-        classification_module = CNNModule(hparams)
+    # elif hparams.train.backbone == "two_stream":
+    #     classification_module = TwoStreamModule(hparams)
+    # # * compare experiment
+    # elif hparams.train.backbone == "cnn_lstm":
+    #     classification_module = CNNLstmModule(hparams)
+    # # * compare experiment
+    # elif hparams.train.backbone == "2dcnn":
+    #     classification_module = CNNModule(hparams)
 
     else:
         raise ValueError("the experiment backbone is not supported.")
