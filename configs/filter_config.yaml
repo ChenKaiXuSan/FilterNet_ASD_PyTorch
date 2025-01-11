@@ -3,8 +3,9 @@ hydra:
   output_subdir: ${train.log_path}/.hydra
   run:
     dir: .
+  runtime:
+    output_dir: ${train.log_path}
 
-  
 optimizer:
   lr: 0.0001
   beta1: 0.5

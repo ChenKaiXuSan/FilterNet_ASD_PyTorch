@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 '''
-File: /workspace/skeleton/project/models/make_model.py
-Project: /workspace/skeleton/project/models
-Created Date: Thursday October 19th 2023
+File: /workspace/project/project/models/make_model.py
+Project: /workspace/project/project/models
+Created Date: Friday January 10th 2025
 Author: Kaixu Chen
 -----
 Comment:
@@ -13,13 +13,11 @@ Have a good code time :)
 Last Modified: Friday January 10th 2025 9:08:20 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
-Copyright (c) 2023 The University of Tsukuba
+Copyright (c) 2025 The University of Tsukuba
 -----
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-
-26-11-2024	Kaixu Chen	remove x3d network.
 '''
 
 from typing import Any, List
@@ -55,6 +53,9 @@ class MakeVideoModule(nn.Module):
         return slow
 
 class MakeImageModule(nn.Module):
+    """
+    make the single image model with ResNet101, from torchvision.models.
+    """    
 
     def __init__(self, hparams) -> None:
 
@@ -73,6 +74,9 @@ class MakeImageModule(nn.Module):
         return model
 
 class MakeViTModule(nn.Module):
+    """
+    make the single image model with Vision Transformer, from timm.
+    """
 
     def __init__(self, hparams) -> None:
 

@@ -203,7 +203,7 @@ class CNNModule(LightningModule):
             "optimizer": optimzier,
             "lr_scheduler": {
                 "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(optimzier),
-                "monitor": "filter_val/loss",
+                "monitor": "filter_train/loss",
             },
         }
 
@@ -226,6 +226,7 @@ class CNNModule(LightningModule):
         logging.info("test end")
 
     def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
+        
         # input and model define
         video = batch["video"].detach()  # c, t, h, w
         label = batch["label"].detach().float().squeeze()  # b
