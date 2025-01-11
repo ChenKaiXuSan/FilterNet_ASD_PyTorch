@@ -203,7 +203,7 @@ class CNNModule(LightningModule):
             "optimizer": optimzier,
             "lr_scheduler": {
                 "scheduler": torch.optim.lr_scheduler.ReduceLROnPlateau(optimzier),
-                "monitor": "val/loss",
+                "monitor": "filter_val/loss",
             },
         }
 
