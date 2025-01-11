@@ -115,17 +115,17 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
     )
 
-    trainer.fit(classification_module, data_module)
+    # trainer.fit(classification_module, data_module)
 
     # use test step to save log.
     trainer.test(
         classification_module,
         data_module,
-        ckpt_path="best",
+        # ckpt_path="best",
     )
 
     # save the best model to file.
-    best_model_path = model_check_point.best_model_path
+    best_model_path = os.path.join(hparams.train.log_path, model_check_point.best_model_path)
     logging.info(f"best model path: {best_model_path}")
     log_best_model_path = os.path.join(hparams.train.log_path, f"filter_ckpt/{str(fold)}_best_model.ckpt")
     if os.path.exists(os.path.join(hparams.train.log_path, "filter_ckpt")) is False:

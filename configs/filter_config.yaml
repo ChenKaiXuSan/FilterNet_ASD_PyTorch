@@ -1,10 +1,9 @@
 # hydra config
 hydra:
-  output_subdir: ${train.log_path}/.hydra
   run:
-    dir: .
-  runtime:
-    output_dir: ${train.log_path}
+    dir: ${train.log_path}
+  job:
+    chdir: false
 
 optimizer:
   lr: 0.0001

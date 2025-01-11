@@ -229,7 +229,7 @@ class CNNModule(LightningModule):
         
         # input and model define
         video = batch["video"].detach()  # c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        label = batch["label"].detach()  # b
 
         # label = label.repeat_interleave(video.size()[1])
         video = video.permute(1, 0, 2, 3)
@@ -238,9 +238,6 @@ class CNNModule(LightningModule):
         with torch.no_grad():
             preds = self.model(video)
 
-        if len(preds.size()) == 1:
-            preds = preds.unsqueeze(0)
-    
         loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
         self.log("filter_test/loss", loss, on_epoch=True, on_step=True, batch_size=video.size()[0])
@@ -279,7 +276,7 @@ class CNNModule(LightningModule):
         """
 
         perds = outputs
-        label = batch["label"].detach().float().squeeze()
+        label = batch["label"].detach()
 
         self.test_outputs.append(outputs)
         # tensor to list

@@ -14,8 +14,10 @@
       "justMyCode": true,
       "args": [
         "data.num_workers=0",
-        "train.gpu_num=0",
-        "train.backbone=2dcnn"
+        "train.gpu_num=1",
+        "train.backbone=2dcnn",
+        "train.phase=swing",
+        // "train.fast_dev_run=true"
       ]
     },
     {
