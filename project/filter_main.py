@@ -121,7 +121,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     trainer.test(
         classification_module,
         data_module,
-        # ckpt_path="best",
+        ckpt_path="best",
     )
 
     # save the best model to file.
