@@ -115,8 +115,8 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         fast_dev_run=hparams.train.fast_dev_run,  # if use fast dev run for debug.
     )
 
-    # trainer.fit(classification_module, data_module)
-
+    trainer.fit(classification_module, data_module)
+ 
     # use test step to save log.
     trainer.test(
         classification_module,
