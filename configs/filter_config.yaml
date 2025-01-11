@@ -13,7 +13,7 @@ optimizer:
 data:
   seg_data_path: /workspace/data/segmentation_dataset_512/ # segmentation dataset path
   gait_seg_data_path: /workspace/data/segmentation_dataset_512/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset. 
-  gait_seg_index_data_path: /workspace/data/seg_gait_index_mapping/ # training mapping path, this used for cross validation, with different class number.
+  gait_seg_index_data_path: /workspace/data/filter_seg_gait_index_mapping/ # training mapping path, this used for cross validation, with different class number.
 
   num_workers: 4
   img_size: 224

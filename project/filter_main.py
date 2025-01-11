@@ -23,6 +23,7 @@ Date      	By	Comments
 import os
 import logging
 import hydra
+import shutil
 from omegaconf import DictConfig
 
 from pytorch_lightning import Trainer, seed_everything
@@ -37,7 +38,7 @@ from pytorch_lightning.callbacks import (
 
 from project.dataloader.filter_data_loader import WalkDataModule
 from project.trainer.train_filter import CNNModule
-from project.cross_validation import DefineCrossValidation
+from project.filter_cross_validation import DefineCrossValidation
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -125,12 +126,12 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     )
 
     # save the best model to file.
-    best_model_path = os.path.join(hparams.train.log_path, model_check_point.best_model_path)
+    best_model_path = os.path.join(model_check_point.best_model_path)
     logging.info(f"best model path: {best_model_path}")
     log_best_model_path = os.path.join(hparams.train.log_path, f"filter_ckpt/{str(fold)}_best_model.ckpt")
     if os.path.exists(os.path.join(hparams.train.log_path, "filter_ckpt")) is False:
         os.makedirs(os.path.join(hparams.train.log_path, "filter_ckpt"))
-    os.system(f"cp {best_model_path} {log_best_model_path}")
+    shutil.copyfile(best_model_path, log_best_model_path)
 
 @hydra.main(
     version_base=None,
