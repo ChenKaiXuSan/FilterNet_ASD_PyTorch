@@ -387,6 +387,7 @@ class WalkDataModule(LightningDataModule):
                 shuffle=True,
                 drop_last=True,
                 collate_fn=self.collate_fn,
+                # worker_init_fn=lambda x: torch.initial_seed(),
             )
         else:
             train_data_loader = DataLoader(
