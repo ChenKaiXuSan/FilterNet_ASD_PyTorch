@@ -63,6 +63,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         experiment: str,
         labeled_video_paths: list[Tuple[str, Optional[dict]]],
         transform: Optional[Callable[[dict], Any]] = None,
+        hparams: Dict = None,
     ) -> None:
         super().__init__()
 
@@ -70,10 +71,13 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         self._labeled_videos = labeled_video_paths
         self._experiment = experiment
 
-        if "True" in experiment:
-            self._temporal_mix = PhaseMix(experiment)
+        self.backbone, self._temporal_mix, *self.phase = experiment.split("_")
+
+        if self._temporal_mix:
+            self._temporal_mix = PhaseMix(hparams)
         else:
             self._temporal_mix = False
+
 
     def move_transform(self, vframes: list[torch.Tensor]) -> None:
 
@@ -111,7 +115,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         # TODO: here should judge the frame with pre-trained model.
         if "True" in self._experiment:
             # should return the new frame, named temporal mix.
-            defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox)
+            defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox, label)
             defined_vframes = self.move_transform(defined_vframes)
 
         elif "single" in self._experiment:
@@ -142,12 +146,14 @@ def labeled_gait_video_dataset(
     experiment: str,
     transform: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
     dataset_idx: Dict = None,
+    hparams: Dict = None,
 ) -> LabeledGaitVideoDataset:
 
     dataset = LabeledGaitVideoDataset(
         experiment=experiment,
         labeled_video_paths=dataset_idx,
         transform=transform,
+        hparams=hparams,
     )
 
     return dataset

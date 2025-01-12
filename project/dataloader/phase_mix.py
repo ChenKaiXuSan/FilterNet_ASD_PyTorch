@@ -18,19 +18,18 @@ Copyright (c) 2025 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
+
+12-01-2025	Kaixu Chen	add the fileter implementation.
 '''
 from __future__ import annotations
 
 import logging
-import json
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
 import torch
 
 from torchvision.io import read_video, write_png
-# from pytorchvideo.transforms.functional import uniform_temporal_subsample
-from torchvision.transforms.v2.functional import uniform_temporal_subsample_video, uniform_temporal_subsample
 
 from project.dataloader.filter import Filter
 
@@ -38,6 +37,7 @@ def split_gait_cycle(video_tensor: torch.Tensor, gait_cycle_index: list, gait_cy
 
     use_idx = []
     ans_list = []
+
     if gait_cycle == 0 or len(gait_cycle_index) == 2 :
         for i in range(0, len(gait_cycle_index)-1, 2):
             ans_list.append(video_tensor[gait_cycle_index[i]:gait_cycle_index[i+1], ...])
@@ -59,22 +59,9 @@ class PhaseMix(object):
     This class is temporal mix, which is used to mix the first phase and second phase of gait cycle.
     """    
 
-    def __init__(self, experiment) -> None:
+    def __init__(self, hparams) -> None:
 
-        if 'periodicity' in experiment:
-            self.periodicity_ratio = float(experiment.split("_")[-1])
-            self.periodicity = True
-            self.symmetric = False
-        elif 'symmetric' in experiment:
-            self.symmetric_ratio = float(experiment.split("_")[-1])
-            self.periodicity = False
-            self.symmetric = True
-        else:
-            self.periodicity = False
-            self.symmetric = False
-
-        # TODO: how to pass the hyparms to the filter?
-        self.filter = Filter()
+        self.filter = Filter(hparams)
         
     @staticmethod
     def process_phase(phase_frame: List[torch.Tensor], phase_idx: List[int], bbox: List[torch.Tensor]) -> List[torch.Tensor]:
@@ -138,82 +125,92 @@ class PhaseMix(object):
 
         return cropped_frame_list
 
-    def fuse_frames(self, processed_first_phase: List[torch.Tensor], processed_second_phase: List[torch.Tensor]) -> torch.Tensor:
-
-        assert len(processed_first_phase) == len(processed_second_phase), "first phase and second phase have different length"
+    def fuse_frames(self, processed_first_phase: List[torch.Tensor], processed_second_phase: List[torch.Tensor], first_phase_sorted_idx: List[torch.Tensor], second_phase_sorted_idx: List[torch.Tensor]) -> torch.Tensor:
 
         res_fused_frames: List[torch.Tensor] = []
-        # TODO: fuse the frame with different phase
+
         for pack in range(len(processed_first_phase)):
             
-            if self.periodicity: 
+            fuse_frame_num = 8
+            
+            first_phase_frame_ans = []
+            second_phase_frame_ans = []
 
-                uniform_first_phase = uniform_temporal_subsample(processed_first_phase[pack], 8, temporal_dim=-4) # t, c, h, w
+            ##############
+            # first phase
+            ##############
+            # * keep the frame num equal to fuse_frame_num
+            if processed_first_phase[pack].size()[0] < fuse_frame_num:
+                for _ in range(fuse_frame_num - processed_first_phase[pack].size()[0]):
+                    processed_first_phase[pack] = torch.cat([processed_first_phase[pack], processed_first_phase[pack][-1].unsqueeze(0)], dim=0)
+                    first_phase_sorted_idx[pack] = torch.cat([first_phase_sorted_idx[pack], first_phase_sorted_idx[pack][-1].unsqueeze(0)], dim=0)
 
-                # FIXME: 第二周期的最后一个stanch pahse的图片数量有可能小于1无法处理。所以简单的使用try的方法避免报错。
-                # 根据给定的比例来随机破坏周期性
-                non_periodicity_ratio = int((self.periodicity_ratio * len(processed_second_phase[pack])))
+            # * resort the frame idx with fuse_frame_num, keep the time order.
+            first_phase_sorted_idx[pack] = sorted(first_phase_sorted_idx[pack][:fuse_frame_num])
 
-                try:
-                    # * 通过将stance phase中的随机帧减少，来破坏周期性
-                    nonperiodicity_ratio = int(torch.randint(0, len(processed_second_phase[pack]) - non_periodicity_ratio, (1,)))
+            for idx in range(fuse_frame_num):
+                first_phase_frame_ans.append(processed_first_phase[pack][first_phase_sorted_idx[pack][idx]])
 
-                    truncated_second_phase = torch.cat([processed_second_phase[pack][:nonperiodicity_ratio, ...], processed_second_phase[pack][nonperiodicity_ratio+non_periodicity_ratio:, ...]], dim=0)
+            ##############
+            # second phase
+            ##############
+            # * keep the frame num equal to fuse_frame_num
+            if processed_second_phase[pack].size()[0] < fuse_frame_num:
+                for _ in range(fuse_frame_num - processed_second_phase[pack].size()[0]):
+                    processed_second_phase[pack] = torch.cat([processed_second_phase[pack], processed_second_phase[pack][-1].unsqueeze(0)], dim=0)
+                    second_phase_sorted_idx[pack] = torch.cat([second_phase_sorted_idx[pack], second_phase_sorted_idx[pack][-1].unsqueeze(0)], dim=0)
+            # * resort the frame idx with fuse_frame_num, keep the time order.
+            second_phase_sorted_idx[pack] = sorted(second_phase_sorted_idx[pack][:fuse_frame_num])
 
-                    uniform_second_phase = uniform_temporal_subsample(truncated_second_phase, 8, temporal_dim=-4)
-
-                except:
-                    uniform_second_phase = uniform_temporal_subsample(processed_second_phase[pack], 8, temporal_dim=-4)
-
-            # 通过将stance phase最开始的帧数减少，来破坏对称性
-            elif self.symmetric:
-                uniform_first_phase = uniform_temporal_subsample(processed_first_phase[pack], 8, temporal_dim=-4) # t, c, h, w
-
-                # 根据给定的比例来进行相位的移动
-                asymmetric_ratio = int((self.symmetric_ratio * len(processed_second_phase[pack])))
-
-                try:
-                    uniform_second_phase = uniform_temporal_subsample(processed_second_phase[pack][asymmetric_ratio:, ...], 8, temporal_dim=-4)
-                except:
-                    uniform_second_phase = uniform_temporal_subsample(processed_second_phase[pack], 8, temporal_dim=-4)
-
-            else:
-                uniform_first_phase = uniform_temporal_subsample(processed_first_phase[pack], 8, temporal_dim=-4) # t, c, h, w
-                uniform_second_phase = uniform_temporal_subsample(processed_second_phase[pack], 8, temporal_dim=-4)
+            for idx in range(fuse_frame_num):
+                second_phase_frame_ans.append(processed_second_phase[pack][second_phase_sorted_idx[pack][idx]])
+            
+            uniform_first_phase = torch.stack(first_phase_frame_ans, dim=0)
+            uniform_second_phase = torch.stack(second_phase_frame_ans, dim=0)
 
             # fuse width dim 
             fused_frames = torch.cat([uniform_first_phase, uniform_second_phase], dim=3)   
 
             # write the fused frame to png
-            # for i in range(fused_frames.size()[0]): 
-            #     write_png(input=fused_frames[i], filename=f'/workspace/project/logs/img/fused{i}.png')
+            for i in range(fused_frames.size()[0]): 
+                write_png(input=fused_frames[i], filename=f'/workspace/project/logs/img/fused{i}.png')
 
             res_fused_frames.append(fused_frames)
             
         return res_fused_frames
         
-    def __call__(self, video_tensor: torch.Tensor, gait_cycle_index: list, bbox: List[torch.Tensor]) -> torch.Tensor:
+    def __call__(self, video_tensor: torch.Tensor, gait_cycle_index: list, bbox: List[torch.Tensor], label: List[torch.Tensor]) -> torch.Tensor:
 
         # * step1: first find the phase frames (pack) and phase index.
         first_phase, first_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 0)
         second_phase, second_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 1)
 
-        # TODO: here review the frame score with pre-trained model.
-        # check if first phse and second phase have the same length
+        # * keep the frame pack length equal.
         if len(first_phase) > len(second_phase):
             second_phase.append(second_phase[-1])
             second_phase_idx.append(second_phase_idx[-1])
         elif len(first_phase) < len(second_phase):
             first_phase.append(first_phase[-1])
             first_phase_idx.append(first_phase_idx[-1])
-            
-        assert len(first_phase) == len(second_phase), "first phase and second phase have different length"
+        
+        filter_info = {
+            "first_phase": first_phase,
+            "second_phase": second_phase,
+            "label": label,
+        }        
 
-        # * step2: process the phase frame, crop and normalize them
+        # * step2: load filter as reviewer
+        # * review the frame score with pre-trained model.
+        filtered_res: dict = self.filter(filter_info)
+
+        first_phase_filtered_scores, first_phase_sorted_idx = filtered_res["first_phase"]
+        second_phase_filtered_scores, second_phase_sorted_idx = filtered_res["second_phase"]
+
+        # * step3: process on pack, crop the human area with bbox
         processed_first_phase = self.process_phase(first_phase, first_phase_idx, bbox)
         processed_second_phase = self.process_phase(second_phase, second_phase_idx, bbox)
 
-        # * step3: process on pack, fuse the frame
-        fused_vframes = self.fuse_frames(processed_first_phase, processed_second_phase)
+        # * step3: fuse the first phase and second phase
+        fused_vframes = self.fuse_frames(processed_first_phase, processed_second_phase, first_phase_sorted_idx, second_phase_sorted_idx)
 
         return fused_vframes

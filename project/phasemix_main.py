@@ -63,6 +63,8 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     seed_everything(42, workers=True)
 
+    hparams.train.current_fold = int(fold)
+
     # * select experiment
     if hparams.train.backbone == "3dcnn":
         classification_module = TemporalMixModule(hparams)
@@ -116,6 +118,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
             int(hparams.train.gpu_num),
         ],
         accelerator="gpu",
+        # strategy="ddp_spawn",
         max_epochs=hparams.train.max_epochs,
         # limit_train_batches=2,
         # limit_val_batches=2,

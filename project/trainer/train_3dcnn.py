@@ -29,7 +29,6 @@ import logging
 import torch
 import torch.nn.functional as F
 
-
 from pytorch_lightning import LightningModule
 
 from torchmetrics.classification import (
@@ -170,16 +169,13 @@ class TemporalMixModule(LightningModule):
     def test_step(self, batch: torch.Tensor, batch_idx: int):
 
         # input and model define
-        video = batch["video"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        video = batch["video"].detach() # b, c, t, h, w
+        label = batch["label"].detach() # b
 
         b, c, t, h, w = video.shape
 
         video_preds = self.video_cnn(video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
-
-        if b == 1:
-            label = label.unsqueeze(0)
 
         # check shape 
         assert label.shape[0] == b

@@ -28,7 +28,9 @@ model:
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
 filter:
-  stance: ckpt/resnet101_swing.ckpt
+  phase: "mix" # stance, swing, mix, whole
+  path: ckpt/
+  backbone: 2dcnn # choices=[3dcnn, 2dcnn, vit], help='the backbone of the model'
 
 train:
   # Training config
@@ -42,7 +44,7 @@ train:
   backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream], help='the backbone of the model'
   temporal_mix: True # if use the temporal mix
 
-  experiment: ${train.backbone}_${train.temporal_mix} # the experiment name
+  experiment: ${train.backbone}_${train.temporal_mix}_${filter.phase}_${filter.backbone} # the experiment name
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
@@ -50,3 +52,4 @@ train:
 
   fast_dev_run: False # if use the fast_dev_run
   fold: 3 # the fold number of the cross validation
+  current_fold: ?? # the current fold number of the cross validation
