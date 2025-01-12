@@ -25,26 +25,40 @@ from torchvision.transforms import (
     Resize,
 )
 
-# from pytorchvideo.transforms import (
-#     ApplyTransformToKey,
-#     UniformTemporalSubsample,
-#     Div255,
-# )
-
-from torchvision.transforms.v2 import UniformTemporalSubsample
-
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, Optional
 from pytorch_lightning import LightningDataModule
 
 import torch
 from torch.utils.data import DataLoader
+from torchvision.transforms.v2 import functional as F, Transform
 
 from pytorchvideo.data import make_clip_sampler
 from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset
 
-import torchvision
-
 from project.dataloader.filter_gait_video_dataset import labeled_gait_video_dataset
+
+class UniformTemporalSubsample(Transform):
+    """Uniformly subsample ``num_samples`` indices from the temporal dimension of the video.
+
+    Videos are expected to be of shape ``[..., T, C, H, W]`` where ``T`` denotes the temporal dimension.
+
+    When ``num_samples`` is larger than the size of temporal dimension of the video, it
+    will sample frames based on nearest neighbor interpolation.
+
+    Args:
+        num_samples (int): The number of equispaced samples to be selected
+    """
+
+    _transformed_types = (torch.Tensor,)
+
+    def __init__(self, num_samples: int):
+        super().__init__()
+        self.num_samples = num_samples
+
+    def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
+        inpt = inpt.permute(1, 0, 2, 3) # [C, T, H, W] -> [T, C, H, W]
+        return self._call_kernel(F.uniform_temporal_subsample, inpt, self.num_samples)
+
 
 disease_to_num_mapping_Dict: Dict = {
     2: {"ASD": 0, "non-ASD": 1},
@@ -245,6 +259,20 @@ class WalkDataModule(LightningDataModule):
             dict: {video: torch.tensor, label: torch.tensor, info: list}
         """
 
+        if "whole" in self._experiment:
+            label = []
+            video = torch.cat([i["video"] for i in batch], dim=0)
+            
+            for i in batch: 
+                _label = torch.tensor(i["label"])
+                label.append(torch.repeat_interleave(_label, i["video"].shape[0]))
+
+            return {
+                "video": video.permute(1, 0, 2, 3),
+                "label": torch.cat(label, dim=0),
+                "info": batch,
+            }
+
         # ! why here need to unpack the batch data, maybe can deprecated.
         batch_label = []
         batch_video = []
@@ -284,15 +312,26 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        train_data_loader = DataLoader(
-            self.train_gait_dataset,
-            batch_size=self._gait_cycle_batch_size,
-            num_workers=self._NUM_WORKERS,
-            pin_memory=True,
-            shuffle=True,
-            drop_last=True,
-            collate_fn=self.collate_fn,
-        )
+        if "whole" in self._experiment:
+            train_data_loader = DataLoader(
+                self.train_gait_dataset,
+                batch_size=self._gait_cycle_batch_size,
+                num_workers=self._NUM_WORKERS,
+                pin_memory=True,
+                shuffle=False, # whole do not need shuffle
+                drop_last=True,
+                collate_fn=self.collate_fn,
+            )
+        else:
+            train_data_loader = DataLoader(
+                self.train_gait_dataset,
+                batch_size=self._gait_cycle_batch_size,
+                num_workers=self._NUM_WORKERS,
+                pin_memory=True,
+                shuffle=True,
+                drop_last=True,
+                collate_fn=self.collate_fn,
+            )
 
         return train_data_loader
 

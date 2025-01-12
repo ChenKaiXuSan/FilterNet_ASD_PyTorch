@@ -16,7 +16,7 @@
         "data.num_workers=0",
         "train.gpu_num=1",
         "train.backbone=2dcnn",
-        "train.phase=swing",
+        "train.phase=whole",
         // "train.fast_dev_run=true"
       ]
     },

@@ -19,7 +19,7 @@ data:
   img_size: 224
   sampling: "over" # over, under, none
 
-  gait_cycle_batch_size: 1 # this used for gait cycle defined method. 
+  gait_cycle_batch_size: 3 # this used for gait cycle defined method. 
 
 model:
   model: ${train.backbone} # the model name
@@ -32,7 +32,7 @@ train:
 
   # used for 3d cnn
   clip_duration: 1 # clip duration for the video
-  uniform_temporal_subsample_num: 8 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
+  uniform_temporal_subsample_num: 30 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
 
   # experiment: cnn, 3dcnn, vit
   backbone: 2dcnn # choices=[3dcnn, 2dcnn], help='the backbone of the model'
