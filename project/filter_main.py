@@ -128,7 +128,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # save the best model to file.
     best_model_path = os.path.join(model_check_point.best_model_path)
     logging.info(f"best model path: {best_model_path}")
-    log_best_model_path = os.path.join(hparams.train.log_path, f"filter_ckpt/{str(fold)}_best_model.ckpt")
+    log_best_model_path = os.path.join(hparams.train.log_path, f"filter_ckpt/{hparams.train.phase}_{str(fold)}_best_model.ckpt")
     if os.path.exists(os.path.join(hparams.train.log_path, "filter_ckpt")) is False:
         os.makedirs(os.path.join(hparams.train.log_path, "filter_ckpt"))
     shutil.copyfile(best_model_path, log_best_model_path)
