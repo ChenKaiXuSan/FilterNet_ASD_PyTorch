@@ -152,7 +152,7 @@ def inference_one_path(one_path: Path, config) -> Dict:
     with open(target_path, 'w') as f:
         json.dump(file_info_dict, f, indent=4, sort_keys=True)
 
-    logging.info(f"update the json file: {one_path}")
+    logging.info(f"save the filtered score to {target_path}")
 
 def process(path_list: list, config) -> Dict:
 

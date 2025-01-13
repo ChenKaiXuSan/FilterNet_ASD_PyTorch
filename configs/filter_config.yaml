@@ -4,6 +4,14 @@ hydra:
     dir: ${train.log_path}
   job:
     chdir: false
+  sweep:
+    dir: logs/filter_train/
+    subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+    params: 
+      train.backbone: 2dcnn
+      train.phase: stance, swing, whole
 
 optimizer:
   lr: 0.0001
