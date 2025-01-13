@@ -29,9 +29,11 @@ import logging
 import hydra
 import os
 import multiprocessing
+from tqdm import tqdm
 
 import torch
 from torchvision.io import read_video
+
 from project.filter_score.filter import Filter
 
 class_num_mapping_Dict: Dict = {
@@ -154,14 +156,14 @@ def inference_one_path(one_path: Path, config) -> Dict:
 
     logging.info(f"save the filtered score to {target_path}")
 
-def process(path_list: list, config) -> Dict:
+def process(path_list: list, config, name: str) -> Dict:
 
-    for one_path in path_list:
+    for one_path in tqdm(path_list, desc=f"{name}"):
         logging.info(one_path)
 
         inference_one_path(one_path, config)
 
-    logging.info("finish all inference")
+    logging.info(f"finish {name} inference")
 
 @hydra.main(
     version_base=None,
@@ -173,21 +175,20 @@ def init_params(config):
     gait_seg_data_path = Path(config.data.gait_seg_data_path)
 
     mapped_class_Dict = map_class_num(3, Path(gait_seg_data_path))
+    
+    processes = []
 
-    # define the process
-    config.train.gpu_num = 0
+    for disease, path_list in mapped_class_Dict.items():
+        p = multiprocessing.Process(target=process, args=(path_list, config, disease), name=f"process_{disease}")
+        p.start()
+        processes.append(p)
 
-    asd = multiprocessing.Process(target=process, args=(mapped_class_Dict['ASD'], config), name="process_ASD")
-    asd.start()
-
-    config.train.gpu_num = 0
-    dhs = multiprocessing.Process(target=process, args=(mapped_class_Dict['DHS'], config), name="process_DHS")
-    dhs.start()
-
-    lcs_HipOA = multiprocessing.Process(target=process, args=(mapped_class_Dict['LCS_HipOA'], config), name="process_LCS_HipOA")
-    lcs_HipOA.start()
-
+    # wait for all process finish
+    for p in processes:
+        p.join()
+    
     logging.info("finish all inference")
+
 
 if __name__ == '__main__':
     
