@@ -99,6 +99,19 @@ cd Skeleton_ASD_PyTorch/
 5. train and evaluate the phasemix model.
 > /project/phasemix/main.py
 
+## Multi run in one script
+
+```bash
+# train the filter model
+python project/filter_train/main.py -m 
+
+# inference the data with pre-trained filter model.
+python project/filter_score/main.py -m
+
+# train and evaluate the phasemix model.
+python project/phasemix/main.py -m
+```
+
 ## Docker
 
 We recommend using docker to build the training environment.
