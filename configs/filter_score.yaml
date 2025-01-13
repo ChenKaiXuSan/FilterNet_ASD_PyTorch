@@ -27,7 +27,7 @@ filter:
 train:
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
-  log_path: logs/filter_score/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  log_path: logs/filter_score/${filter.phase}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
   fold: 3 # the fold number of the cross validation

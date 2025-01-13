@@ -118,7 +118,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         # TODO: here should judge the frame with pre-trained model.
         if "True" in self._experiment:
             # should return the new frame, named temporal mix.
-            defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox, label)
+            defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox, label, filter_info)
             defined_vframes = self.move_transform(defined_vframes)
         
         else:

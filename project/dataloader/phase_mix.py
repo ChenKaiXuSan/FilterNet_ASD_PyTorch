@@ -31,8 +31,6 @@ import torch
 
 from torchvision.io import read_video, write_png
 
-from project.dataloader.filter import Filter
-
 def split_gait_cycle(video_tensor: torch.Tensor, gait_cycle_index: list, gait_cycle: int):
 
     use_idx = []
@@ -61,8 +59,9 @@ class PhaseMix(object):
 
     def __init__(self, hparams) -> None:
 
-        self.filter = Filter(hparams)
+        # self.filter = Filter(hparams)
         self.current_fold = hparams.train.current_fold
+        self.uniform_temporal_subsample = hparams.train.uniform_temporal_subsample_num
         
     @staticmethod
     def process_phase(phase_frame: List[torch.Tensor], phase_idx: List[int], bbox: List[torch.Tensor]) -> List[torch.Tensor]:
@@ -132,7 +131,7 @@ class PhaseMix(object):
 
         for pack in range(len(processed_first_phase)):
             
-            fuse_frame_num = 8
+            fuse_frame_num = self.uniform_temporal_subsample
             
             first_phase_frame_ans = []
             second_phase_frame_ans = []
@@ -140,36 +139,44 @@ class PhaseMix(object):
             ##############
             # first phase
             ##############
+            # * split > sort > alignment > select from the sorted idx
+            # * resort the frame idx with fuse_frame_num, keep the time order.
+            first_phase_sorted_idx[pack] = first_phase_sorted_idx[pack][:fuse_frame_num]
+            first_phase_sorted_idx[pack] = sorted(first_phase_sorted_idx[pack])
+
             # * keep the frame num equal to fuse_frame_num
             if processed_first_phase[pack].size()[0] < fuse_frame_num:
                 for _ in range(fuse_frame_num - processed_first_phase[pack].size()[0]):
                     processed_first_phase[pack] = torch.cat([processed_first_phase[pack], processed_first_phase[pack][-1].unsqueeze(0)], dim=0)
-                    first_phase_sorted_idx[pack] = torch.cat([first_phase_sorted_idx[pack], first_phase_sorted_idx[pack][-1].unsqueeze(0)], dim=0)
-
-            # * resort the frame idx with fuse_frame_num, keep the time order.
-            first_phase_sorted_idx[pack] = sorted(first_phase_sorted_idx[pack][:fuse_frame_num])
+                    first_phase_sorted_idx[pack].append(first_phase_sorted_idx[pack][-1])
 
             for idx in range(fuse_frame_num):
                 first_phase_frame_ans.append(processed_first_phase[pack][first_phase_sorted_idx[pack][idx]])
 
+            uniform_first_phase = torch.stack(first_phase_frame_ans, dim=0)
+
             ##############
             # second phase
             ##############
+
+            # * resort the frame idx with fuse_frame_num, keep the time order.
+            second_phase_sorted_idx[pack] = second_phase_sorted_idx[pack][:fuse_frame_num]
+            second_phase_sorted_idx[pack] = sorted(second_phase_sorted_idx[pack])
+
             # * keep the frame num equal to fuse_frame_num
             if processed_second_phase[pack].size()[0] < fuse_frame_num:
                 for _ in range(fuse_frame_num - processed_second_phase[pack].size()[0]):
                     processed_second_phase[pack] = torch.cat([processed_second_phase[pack], processed_second_phase[pack][-1].unsqueeze(0)], dim=0)
-                    second_phase_sorted_idx[pack] = torch.cat([second_phase_sorted_idx[pack], second_phase_sorted_idx[pack][-1].unsqueeze(0)], dim=0)
-            # * resort the frame idx with fuse_frame_num, keep the time order.
-            second_phase_sorted_idx[pack] = sorted(second_phase_sorted_idx[pack][:fuse_frame_num])
+                    second_phase_sorted_idx[pack].append(second_phase_sorted_idx[pack][-1])
 
             for idx in range(fuse_frame_num):
                 second_phase_frame_ans.append(processed_second_phase[pack][second_phase_sorted_idx[pack][idx]])
             
-            uniform_first_phase = torch.stack(first_phase_frame_ans, dim=0)
             uniform_second_phase = torch.stack(second_phase_frame_ans, dim=0)
 
+            #################
             # fuse width dim 
+            #################
             fused_frames = torch.cat([uniform_first_phase, uniform_second_phase], dim=3)   
 
             # write the fused frame to png

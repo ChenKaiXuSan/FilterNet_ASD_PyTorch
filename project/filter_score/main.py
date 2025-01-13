@@ -21,7 +21,6 @@ Date      	By	Comments
 ----------	---	---------------------------------------------------------
 '''
 
-import multiprocessing.process
 from pathlib import Path
 from typing import Dict
 
@@ -33,7 +32,7 @@ import multiprocessing
 
 import torch
 from torchvision.io import read_video
-from project.dataloader.filter import Filter
+from project.filter_score.filter import Filter
 
 class_num_mapping_Dict: Dict = {
     2: {
@@ -146,7 +145,7 @@ def inference_one_path(one_path: Path, config) -> Dict:
         }
 
     # save to json file
-    target_path = Path(config.data.gait_seg_data_path_with_score) / disease / one_path.name
+    target_path = Path(config.data.gait_seg_data_path_with_score) / config.filter.phase / disease / one_path.name
     if not target_path.parent.exists():
         target_path.parent.mkdir(parents=True)
 
@@ -178,14 +177,14 @@ def init_params(config):
     # define the process
     config.train.gpu_num = 0
 
-    asd = multiprocessing.Process(target=process, args=(mapped_class_Dict['ASD'], config))
+    asd = multiprocessing.Process(target=process, args=(mapped_class_Dict['ASD'], config), name="process_ASD")
     asd.start()
 
-    config.train.gpu_num = 1
-    dhs = multiprocessing.Process(target=process, args=(mapped_class_Dict['DHS'], config))
+    config.train.gpu_num = 0
+    dhs = multiprocessing.Process(target=process, args=(mapped_class_Dict['DHS'], config), name="process_DHS")
     dhs.start()
 
-    lcs_HipOA = multiprocessing.Process(target=process, args=(mapped_class_Dict['LCS_HipOA'], config))
+    lcs_HipOA = multiprocessing.Process(target=process, args=(mapped_class_Dict['LCS_HipOA'], config), name="process_LCS_HipOA")
     lcs_HipOA.start()
 
     logging.info("finish all inference")
