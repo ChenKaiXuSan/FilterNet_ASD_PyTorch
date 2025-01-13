@@ -62,7 +62,7 @@ class Filter(nn.Module):
 
     def init_filter_model(self, hparams) -> nn.Module:
 
-        logging.info(f"filter with {hparams.filter.phase} phase.")
+        # logging.info(f"filter with {hparams.filter.phase} phase.")
 
         if hparams.filter.phase == "mix":
             # * load the stance and swing model
@@ -72,14 +72,14 @@ class Filter(nn.Module):
             _ckpt = self.convert_to_torch_model(stance_ckpt_path)
             self.stance_model.load_state_dict((_ckpt['state_dict']))
 
-            logging.info(f"load stance model from {stance_ckpt_path}")
+            # logging.info(f"load stance model from {stance_ckpt_path}")
 
             swing_ckpt_path = os.path.join(hparams.filter.path, "swing", f"{hparams.train.current_fold}_best_model.ckpt")
             self.swing_model = self.load_model(hparams)
             _ckpt = self.convert_to_torch_model(swing_ckpt_path)
             self.swing_model.load_state_dict((_ckpt['state_dict']))
 
-            logging.info(f"load swing model from {swing_ckpt_path}")
+            # logging.info(f"load swing model from {swing_ckpt_path}")
 
         else:
 
@@ -89,7 +89,7 @@ class Filter(nn.Module):
             _ckpt = self.convert_to_torch_model(ckpt_path)
             self._model.load_state_dict(_ckpt['state_dict'])
 
-            logging.info(f"load model from {ckpt_path}")
+            # logging.info(f"load model from {ckpt_path}")
 
     def convert_to_torch_model(self, ckpt_path: str) -> Dict[str, Any]:
         """convert pytorch lightning model to torch model

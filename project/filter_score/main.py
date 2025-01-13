@@ -159,7 +159,7 @@ def inference_one_path(one_path: Path, config) -> Dict:
 def process(path_list: list, config, name: str) -> Dict:
 
     for one_path in tqdm(path_list, desc=f"{name}"):
-        logging.info(one_path)
+        # logging.info(one_path)
 
         inference_one_path(one_path, config)
 
@@ -179,7 +179,7 @@ def init_params(config):
     processes = []
 
     for disease, path_list in mapped_class_Dict.items():
-        p = multiprocessing.Process(target=process, args=(path_list, config, disease), name=f"process_{disease}")
+        p = multiprocessing.Process(target=process, args=(path_list, config, f"filter: {disease}"), name=f"process_{disease}")
         p.start()
         processes.append(p)
 
