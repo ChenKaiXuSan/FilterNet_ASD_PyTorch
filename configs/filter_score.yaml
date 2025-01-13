@@ -7,10 +7,10 @@ hydra:
   sweep:
     dir: logs/filter_score/
     subdir: ${filter.phase}/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  # sweeper:
-  #   _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
-  #   params: 
-  #     filter.phase: mix, stance, swing, whole
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+    params: 
+      filter.phase: mix, stance, swing, whole
     
 data:
   seg_data_path: /workspace/data/segmentation_dataset_512/ # segmentation dataset path
