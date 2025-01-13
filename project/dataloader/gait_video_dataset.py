@@ -70,6 +70,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         self._transform = transform
         self._labeled_videos = labeled_video_paths
         self._experiment = experiment
+        self.current_fold = hparams.train.current_fold
 
         self.backbone, self._temporal_mix, *self.phase = experiment.split("_")
 
@@ -112,20 +113,14 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         bbox_none_index = file_info_dict["none_index"]
         bbox = file_info_dict["bbox"]
 
+        filter_info = file_info_dict["filter_info"]
+
         # TODO: here should judge the frame with pre-trained model.
         if "True" in self._experiment:
             # should return the new frame, named temporal mix.
             defined_vframes = self._temporal_mix(vframes, gait_cycle_index, bbox, label)
             defined_vframes = self.move_transform(defined_vframes)
-
-        elif "single" in self._experiment:
-            if "stance" in self._experiment:    
-                defined_vframes, used_gait_idx = split_gait_cycle(vframes, gait_cycle_index, 0)
-            elif "swing" in self._experiment:
-                defined_vframes, used_gait_idx = split_gait_cycle(vframes, gait_cycle_index, 1)
-            
-            defined_vframes = self.move_transform(defined_vframes)
-                
+        
         else:
             raise ValueError("experiment name is not correct")
 

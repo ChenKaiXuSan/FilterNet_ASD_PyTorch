@@ -62,6 +62,7 @@ class PhaseMix(object):
     def __init__(self, hparams) -> None:
 
         self.filter = Filter(hparams)
+        self.current_fold = hparams.train.current_fold
         
     @staticmethod
     def process_phase(phase_frame: List[torch.Tensor], phase_idx: List[int], bbox: List[torch.Tensor]) -> List[torch.Tensor]:
@@ -179,38 +180,69 @@ class PhaseMix(object):
             
         return res_fused_frames
         
-    def __call__(self, video_tensor: torch.Tensor, gait_cycle_index: list, bbox: List[torch.Tensor], label: List[torch.Tensor]) -> torch.Tensor:
+    # def __call__(self, video_tensor: torch.Tensor, gait_cycle_index: list, bbox: List[torch.Tensor], label: List[torch.Tensor]) -> torch.Tensor:
 
-        # * step1: first find the phase frames (pack) and phase index.
-        first_phase, first_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 0)
-        second_phase, second_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 1)
+    #     # * step1: first find the phase frames (pack) and phase index.
+    #     first_phase, first_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 0)
+    #     second_phase, second_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 1)
 
-        # * keep the frame pack length equal.
-        if len(first_phase) > len(second_phase):
-            second_phase.append(second_phase[-1])
-            second_phase_idx.append(second_phase_idx[-1])
-        elif len(first_phase) < len(second_phase):
-            first_phase.append(first_phase[-1])
-            first_phase_idx.append(first_phase_idx[-1])
+    #     # * keep the frame pack length equal.
+    #     if len(first_phase) > len(second_phase):
+    #         second_phase.append(second_phase[-1])
+    #         second_phase_idx.append(second_phase_idx[-1])
+    #     elif len(first_phase) < len(second_phase):
+    #         first_phase.append(first_phase[-1])
+    #         first_phase_idx.append(first_phase_idx[-1])
         
-        filter_info = {
-            "first_phase": first_phase,
-            "second_phase": second_phase,
-            "label": label,
-        }        
+    #     filter_info = {
+    #         "first_phase": first_phase,
+    #         "second_phase": second_phase,
+    #         "label": label,
+    #     }        
 
-        # * step2: load filter as reviewer
-        # * review the frame score with pre-trained model.
-        filtered_res: dict = self.filter(filter_info)
+    #     # * step2: load filter as reviewer
+    #     # * review the frame score with pre-trained model.
+    #     filtered_res: dict = self.filter(filter_info)
 
-        first_phase_filtered_scores, first_phase_sorted_idx = filtered_res["first_phase"]
-        second_phase_filtered_scores, second_phase_sorted_idx = filtered_res["second_phase"]
+    #     first_phase_filtered_scores, first_phase_sorted_idx = filtered_res["first_phase"]
+    #     second_phase_filtered_scores, second_phase_sorted_idx = filtered_res["second_phase"]
 
-        # * step3: process on pack, crop the human area with bbox
-        processed_first_phase = self.process_phase(first_phase, first_phase_idx, bbox)
-        processed_second_phase = self.process_phase(second_phase, second_phase_idx, bbox)
+    #     # * step3: process on pack, crop the human area with bbox
+    #     processed_first_phase = self.process_phase(first_phase, first_phase_idx, bbox)
+    #     processed_second_phase = self.process_phase(second_phase, second_phase_idx, bbox)
 
-        # * step3: fuse the first phase and second phase
-        fused_vframes = self.fuse_frames(processed_first_phase, processed_second_phase, first_phase_sorted_idx, second_phase_sorted_idx)
+    #     # * step3: fuse the first phase and second phase
+    #     fused_vframes = self.fuse_frames(processed_first_phase, processed_second_phase, first_phase_sorted_idx, second_phase_sorted_idx)
 
-        return fused_vframes
+    #     return fused_vframes
+
+    def __call__(self, video_tensor: torch.Tensor, gait_cycle_index: list, bbox: List[torch.Tensor], label: List[torch.Tensor], filter_info: Dict[str, dict]) -> torch.Tensor:
+
+            # * step1: first find the phase frames (pack) and phase index.
+            first_phase, first_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 0)
+            second_phase, second_phase_idx = split_gait_cycle(video_tensor, gait_cycle_index, 1)
+
+            first_phase_filtered_scores = filter_info["first_phase"][f"fold{self.current_fold}"]["filtered_scores"]
+            first_phase_sorted_idx = filter_info["first_phase"][f"fold{self.current_fold}"]["sorted_idx"]
+
+            second_phase_filtered_scores = filter_info["second_phase"][f"fold{self.current_fold}"]["filtered_scores"]
+            second_phase_sorted_idx = filter_info["second_phase"][f"fold{self.current_fold}"]["sorted_idx"]
+
+            # * keep the frame pack length equal.
+            if len(first_phase) > len(second_phase):
+                second_phase.append(second_phase[-1])
+                second_phase_idx.append(second_phase_idx[-1])
+                second_phase_sorted_idx.append(second_phase_sorted_idx[-1])
+            elif len(first_phase) < len(second_phase):
+                first_phase.append(first_phase[-1])
+                first_phase_idx.append(first_phase_idx[-1])
+                first_phase_sorted_idx.append(first_phase_sorted_idx[-1])
+            
+            # * step3: process on pack, crop the human area with bbox
+            processed_first_phase = self.process_phase(first_phase, first_phase_idx, bbox)
+            processed_second_phase = self.process_phase(second_phase, second_phase_idx, bbox)
+
+            # * step3: fuse the first phase and second phase
+            fused_vframes = self.fuse_frames(processed_first_phase, processed_second_phase, first_phase_sorted_idx, second_phase_sorted_idx)
+
+            return fused_vframes

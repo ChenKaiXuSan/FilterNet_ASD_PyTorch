@@ -158,8 +158,8 @@ class Filter(nn.Module):
             # sort the scores, return the sorted indices
             sorted_indices = torch.argsort(filtered_scores, descending=True)
 
-            ans_filtered_scores.append(filtered_scores)
-            ans_sorted_indices.append(sorted_indices)
+            ans_filtered_scores.append(filtered_scores.tolist())
+            ans_sorted_indices.append(sorted_indices.tolist())
 
         return ans_filtered_scores, ans_sorted_indices
         
