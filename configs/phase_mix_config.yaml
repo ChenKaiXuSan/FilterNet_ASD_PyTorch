@@ -23,7 +23,7 @@ data:
   gait_seg_data_path: /workspace/data/segmentation_dataset_512/json_mix_with_score/${filter.phase} # defined gait cycle json path. This path uesd be gait cycle defined dataset.
   gait_seg_index_data_path: /workspace/data/seg_gait_index_mapping_with_filter_score/${filter.phase} # training mapping path, this used for cross validation, with different class number.
 
-  num_workers: 4
+  num_workers: 7
   img_size: 224
   sampling: "over" # over, under, none
 
