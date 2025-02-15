@@ -1,8 +1,18 @@
 # hydra config
 hydra:
   run:
-    dir: /workspace/project/${train.log_path}
-  
+    dir: ${train.log_path}
+  job:
+    chdir: false
+  sweep:
+    dir: logs/filter_train/
+    subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweeper:
+    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+    params: 
+      train.backbone: 2dcnn
+      train.phase: stance, swing, whole
+
 optimizer:
   lr: 0.0001
   beta1: 0.5
@@ -11,13 +21,13 @@ optimizer:
 data:
   seg_data_path: /workspace/data/segmentation_dataset_512/ # segmentation dataset path
   gait_seg_data_path: /workspace/data/segmentation_dataset_512/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset. 
-  gait_seg_index_data_path: /workspace/data/seg_gait_index_mapping/ # training mapping path, this used for cross validation, with different class number.
+  gait_seg_index_data_path: /workspace/data/filter_seg_gait_index_mapping/ # training mapping path, this used for cross validation, with different class number.
 
   num_workers: 4
   img_size: 224
   sampling: "over" # over, under, none
 
-  gait_cycle_batch_size: 1 # this used for gait cycle defined method. 
+  gait_cycle_batch_size: 3 # this used for gait cycle defined method. 
 
 model:
   model: ${train.backbone} # the model name
@@ -30,7 +40,7 @@ train:
 
   # used for 3d cnn
   clip_duration: 1 # clip duration for the video
-  uniform_temporal_subsample_num: 8 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
+  uniform_temporal_subsample_num: 30 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
 
   # experiment: cnn, 3dcnn, vit
   backbone: 2dcnn # choices=[3dcnn, 2dcnn], help='the backbone of the model'
@@ -39,7 +49,7 @@ train:
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
-  log_path: logs/filter/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  log_path: logs/filter_train/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
   fold: 3 # the fold number of the cross validation

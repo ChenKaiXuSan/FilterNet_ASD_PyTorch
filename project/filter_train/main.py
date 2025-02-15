@@ -23,6 +23,7 @@ Date      	By	Comments
 import os
 import logging
 import hydra
+import shutil
 from omegaconf import DictConfig
 
 from pytorch_lightning import Trainer, seed_everything
@@ -35,9 +36,9 @@ from pytorch_lightning.callbacks import (
     LearningRateMonitor,
 )
 
-from project.dataloader.filter_data_loader import WalkDataModule
-from project.trainer.train_cnn import CNNModule
-from project.cross_validation import DefineCrossValidation
+from project.filter_train.dataloader.filter_data_loader import WalkDataModule
+from project.filter_train.trainer.train_filter import CNNModule
+from project.filter_train.filter_cross_validation import DefineCrossValidation
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -78,9 +79,9 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     # define the checkpoint becavier.
     model_check_point = ModelCheckpoint(
-        filename="{epoch}-{val/loss:.2f}-{val/video_acc:.4f}",
+        filename="{epoch}-{filter_val/loss:.2f}-{filter_val/acc:.4f}",
         auto_insert_metric_name=False,
-        monitor="val/video_acc",
+        monitor="filter_val/acc",
         mode="max",
         save_last=False,
         save_top_k=2,
@@ -88,7 +89,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     # define the early stop.
     early_stopping = EarlyStopping(
-        monitor="val/video_acc",
+        monitor="filter_val/acc",
         patience=3,
         mode="max",
     )
@@ -116,18 +117,29 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     )
 
     trainer.fit(classification_module, data_module)
-
-    # the validate method will wirte in the same log twice, so use the test method.
+ 
+    # use test step to save log.
     trainer.test(
         classification_module,
         data_module,
         ckpt_path="best",
     )
 
+    # save the best model to file.
+    best_model_path = os.path.join(model_check_point.best_model_path)
+    logging.info(f"best model path: {best_model_path}")
+    log_best_model_path = os.path.join(hparams.train.log_path, f"filter_ckpt/{hparams.train.phase}_{str(fold)}_best_model.ckpt")
+
+    if os.path.exists(os.path.join(hparams.train.log_path, "filter_ckpt")) is False:
+        os.makedirs(os.path.join(hparams.train.log_path, "filter_ckpt"))
+     
+    shutil.copyfile(best_model_path, log_best_model_path)
+    # copy for the filter score inference.
+    shutil.copyfile(best_model_path, os.path.join("/ckpt",f"{hparams.train.phase}/{str(fold)}_best_model.ckpt"))
 
 @hydra.main(
     version_base=None,
-    config_path="../configs",  # * the config_path is relative to location of the python script
+    config_path="../../configs",  # * the config_path is relative to location of the python script
     config_name="filter_config.yaml",
 )
 def init_params(config):

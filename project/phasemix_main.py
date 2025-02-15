@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Thursday January 9th 2025 12:29:05 pm
+Last Modified: Friday January 10th 2025 9:08:20 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -44,11 +44,9 @@ from project.dataloader.data_loader import WalkDataModule
 # 3D CNN model
 
 # compare experiment
-from project.step1_filter.trainer.train_cnn import CNNModule
+from project.trainer.train_3dcnn import TemporalMixModule
 
-
-from project.step1_filter.cross_validation import DefineCrossValidation
-from project.project.utils.helper import save_helper
+from project.cross_validation import DefineCrossValidation
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -65,28 +63,21 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     seed_everything(42, workers=True)
 
+    hparams.train.current_fold = int(fold)
+
     # * select experiment
     if hparams.train.backbone == "3dcnn":
-        # * ablation study 2: different training strategy
-        if "late_fusion" in hparams.train.experiment:
-            classification_module = LateFusionModule(hparams)
-        elif "single" in hparams.train.experiment:
-            classification_module = SingleModule(hparams)
-        elif hparams.train.temporal_mix:
-            classification_module = TemporalMixModule(hparams)
-        else:
-            raise ValueError(f"the {hparams.train.experiment} is not supported.")
-    elif hparams.train.backbone == "3dcnn_atn":
-        classification_module = BackboneATNModule(hparams)
+        classification_module = TemporalMixModule(hparams)
+    # TODO: add other experiment
     # * compare experiment
-    elif hparams.train.backbone == "two_stream":
-        classification_module = TwoStreamModule(hparams)
-    # * compare experiment
-    elif hparams.train.backbone == "cnn_lstm":
-        classification_module = CNNLstmModule(hparams)
-    # * compare experiment
-    elif hparams.train.backbone == "2dcnn":
-        classification_module = CNNModule(hparams)
+    # elif hparams.train.backbone == "two_stream":
+    #     classification_module = TwoStreamModule(hparams)
+    # # * compare experiment
+    # elif hparams.train.backbone == "cnn_lstm":
+    #     classification_module = CNNLstmModule(hparams)
+    # # * compare experiment
+    # elif hparams.train.backbone == "2dcnn":
+    #     classification_module = CNNModule(hparams)
 
     else:
         raise ValueError("the experiment backbone is not supported.")
@@ -127,6 +118,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
             int(hparams.train.gpu_num),
         ],
         accelerator="gpu",
+        # strategy="ddp_spawn",
         max_epochs=hparams.train.max_epochs,
         # limit_train_batches=2,
         # limit_val_batches=2,
@@ -151,25 +143,10 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         ckpt_path="best",
     )
 
-    # TODO: this step move to trainer.test() method.
-    # if hparams.train.backbone == "3dcnn_atn":
-    #     pass
-    # else:
-    #     # save_helper(hparams, classification_module, data_module, fold) #! debug only
-    #     save_helper(
-    #         hparams,
-    #         classification_module.load_from_checkpoint(
-    #             trainer.checkpoint_callback.best_model_path
-    #         ),
-    #         data_module,
-    #         fold,
-    #     )
-
-
 @hydra.main(
     version_base=None,
     config_path="../configs",  # * the config_path is relative to location of the python script
-    config_name="config.yaml",
+    config_name="phase_mix_config.yaml",
 )
 def init_params(config):
     #######################

@@ -15,7 +15,35 @@
       "args": [
         "data.num_workers=0",
         "train.gpu_num=1",
-        "train.backbone=2dcnn"
+        "train.backbone=2dcnn",
+        "train.phase=whole",
+        // "train.fast_dev_run=true"
+      ]
+    },
+    {
+      "name": "filter_phase_mix_train",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "project.phasemix_main",
+      "justMyCode": true,
+      "args": [
+        "data.num_workers=0",
+        "train.gpu_num=1",
+        "train.backbone=3dcnn",
+        "filter.phase=mix",
+      ]
+    },
+    {
+      "name": "save_filter_score_to_json",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "project.filter_score.main",
+      "justMyCode": true,
+      "args": [
+        // "data.num_workers=0",
+        // "train.gpu_num=1",
+        // "train.backbone=3dcnn",
+        // "filter.phase=whole",
       ]
     }
   ]
