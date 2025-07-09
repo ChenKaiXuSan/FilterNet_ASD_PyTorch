@@ -29,6 +29,7 @@ from pytorch_lightning import LightningModule
 # from torchvision.utils import save_image, flow_to_image
 
 from project.models.make_model import MakeImageModule, MakeViTModule
+from filter.models.hybrid_filter import HybridFilterNet
 from project.utils.helper import save_inference, save_metrics, save_CM
 
 from torchmetrics.classification import (
@@ -74,6 +75,9 @@ class CNNModule(LightningModule):
             model = MakeViTModule(hparams)
             model = model.make_vit(num_classes)
 
+        elif model == "hybrid":
+            model = HybridFilterNet(n_segment=8)
+
         else:
             raise ValueError("the model is not supported.")
 
@@ -109,7 +113,7 @@ class CNNModule(LightningModule):
                 preds = self.model(video[i : i + _batch_size, ...])
                 _label = label[i : i + _batch_size].long()
                 loss = F.cross_entropy(preds.squeeze(dim=-1), _label)
-            
+
                 self.train_batch_end(preds, loss, _label)
         else:
             preds = self.model(video)
@@ -122,7 +126,13 @@ class CNNModule(LightningModule):
 
     def train_batch_end(self, preds, loss, label):
 
-        self.log("filter_train/loss", loss, on_epoch=True, on_step=True, batch_size=label.size()[0])
+        self.log(
+            "filter_train/loss",
+            loss,
+            on_epoch=True,
+            on_step=True,
+            batch_size=label.size()[0],
+        )
 
         # log metrics
         video_acc = self._accuracy(preds, label)
@@ -137,8 +147,9 @@ class CNNModule(LightningModule):
             "filter_train/recall": video_recall,
             "filter_train/f1_score": video_f1_score,
         }
-        self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=label.size()[0])
-
+        self.log_dict(
+            metric_dict, on_epoch=True, on_step=True, batch_size=label.size()[0]
+        )
 
     def validation_step(self, batch, batch_idx):
         """
@@ -165,13 +176,19 @@ class CNNModule(LightningModule):
         loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
         return loss, preds
-    
+
     def on_validation_batch_end(self, outputs, batch, batch_idx):
 
         loss, preds = outputs
         label = batch["label"].detach()
 
-        self.log("filter_val/loss", loss, on_epoch=True, on_step=True, batch_size=label.size()[0])
+        self.log(
+            "filter_val/loss",
+            loss,
+            on_epoch=True,
+            on_step=True,
+            batch_size=label.size()[0],
+        )
 
         # log metrics
         video_acc = self._accuracy(preds, label)
@@ -186,7 +203,9 @@ class CNNModule(LightningModule):
             "filter_val/recall": video_recall,
             "filter_val/f1_score": video_f1_score,
         }
-        self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=label.size()[0])
+        self.log_dict(
+            metric_dict, on_epoch=True, on_step=True, batch_size=label.size()[0]
+        )
 
     def configure_optimizers(self):
         """
@@ -226,7 +245,7 @@ class CNNModule(LightningModule):
         logging.info("test end")
 
     def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int):
-        
+
         # input and model define
         video = batch["video"].detach()  # c, t, h, w
         label = batch["label"].detach()  # b
@@ -240,7 +259,13 @@ class CNNModule(LightningModule):
 
         loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
-        self.log("filter_test/loss", loss, on_epoch=True, on_step=True, batch_size=video.size()[0])
+        self.log(
+            "filter_test/loss",
+            loss,
+            on_epoch=True,
+            on_step=True,
+            batch_size=video.size()[0],
+        )
 
         # log metrics
         video_acc = self._accuracy(preds, label)
@@ -255,7 +280,9 @@ class CNNModule(LightningModule):
             "filter_test/recall": video_recall,
             "filter_test/f1_score": video_f1_score,
         }
-        self.log_dict(metric_dict, on_epoch=True, on_step=True, batch_size=video.size()[0])
+        self.log_dict(
+            metric_dict, on_epoch=True, on_step=True, batch_size=video.size()[0]
+        )
 
         return preds
 

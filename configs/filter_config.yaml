@@ -42,7 +42,7 @@ train:
   clip_duration: 1 # clip duration for the video
   uniform_temporal_subsample_num: 30 # num frame from the clip duration, f or define one gait cycle, we need use whole frames.
 
-  # experiment: cnn, 3dcnn, vit
+  # experiment: cnn, 3dcnn, vit, hybrid
   backbone: 2dcnn # choices=[3dcnn, 2dcnn], help='the backbone of the model'
   phase: stance # choices=[stance, swing, whole], help='the phase of the gait cycle'
   experiment: ${train.backbone}_${train.phase} # the experiment name
