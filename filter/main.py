@@ -36,9 +36,9 @@ from pytorch_lightning.callbacks import (
     LearningRateMonitor,
 )
 
-from project.filter_train.dataloader.filter_data_loader import WalkDataModule
-from project.filter_train.trainer.train_filter import CNNModule
-from project.filter_train.filter_cross_validation import DefineCrossValidation
+from filter.dataloader.filter_data_loader import WalkDataModule
+from filter.trainer.train_filter import CNNModule
+from filter.filter_cross_validation import DefineCrossValidation
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -139,7 +139,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
 @hydra.main(
     version_base=None,
-    config_path="../../configs",  # * the config_path is relative to location of the python script
+    config_path="../configs",  # * the config_path is relative to location of the python script
     config_name="filter_config.yaml",
 )
 def init_params(config):

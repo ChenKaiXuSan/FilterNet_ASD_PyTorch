@@ -35,7 +35,10 @@ from torchvision.transforms.v2 import functional as F, Transform
 from pytorchvideo.data import make_clip_sampler
 from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset
 
-from project.dataloader.filter_gait_video_dataset import labeled_gait_video_dataset
+from filter.dataloader.filter_gait_video_dataset import (
+    labeled_gait_video_dataset,
+)
+
 
 class UniformTemporalSubsample(Transform):
     """Uniformly subsample ``num_samples`` indices from the temporal dimension of the video.
@@ -56,7 +59,7 @@ class UniformTemporalSubsample(Transform):
         self.num_samples = num_samples
 
     def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        inpt = inpt.permute(1, 0, 2, 3) # [C, T, H, W] -> [T, C, H, W]
+        inpt = inpt.permute(1, 0, 2, 3)  # [C, T, H, W] -> [T, C, H, W]
         return self._call_kernel(F.uniform_temporal_subsample, inpt, self.num_samples)
 
 
@@ -262,8 +265,8 @@ class WalkDataModule(LightningDataModule):
         if "whole" in self._experiment:
             label = []
             video = torch.cat([i["video"] for i in batch], dim=0)
-            
-            for i in batch: 
+
+            for i in batch:
                 _label = torch.tensor(i["label"])
                 label.append(torch.repeat_interleave(_label, i["video"].shape[0]))
 
@@ -318,7 +321,7 @@ class WalkDataModule(LightningDataModule):
                 batch_size=self._gait_cycle_batch_size,
                 num_workers=self._NUM_WORKERS,
                 pin_memory=True,
-                shuffle=False, # whole do not need shuffle
+                shuffle=False,  # whole do not need shuffle
                 drop_last=True,
                 collate_fn=self.collate_fn,
             )
