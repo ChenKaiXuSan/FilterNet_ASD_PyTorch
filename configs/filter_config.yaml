@@ -27,7 +27,7 @@ data:
   img_size: 224
   sampling: "over" # over, under, none
 
-  gait_cycle_batch_size: 3 # this used for gait cycle defined method. 
+  gait_cycle_batch_size: 4 # this used for gait cycle defined method. 
 
 model:
   model: ${train.backbone} # the model name
