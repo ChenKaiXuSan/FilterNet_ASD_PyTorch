@@ -7,6 +7,10 @@
 		{
 			"name": "data",
 			"path": "/workspace/data"
+		},
+		{
+			"name": "Skeleton_ASD_PyTorch",
+			"path": "../../Skeleton_ASD_PyTorch"
 		}
 	]
 }

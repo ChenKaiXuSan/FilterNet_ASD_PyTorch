@@ -25,11 +25,10 @@ import logging
 import torch.nn.functional as F
 from pytorch_lightning import LightningModule
 
-# from torchvision.io import write_video
-# from torchvision.utils import save_image, flow_to_image
 
-from project.models.make_model import MakeImageModule, MakeViTModule
 from filter.models.hybrid_filter import HybridFilterNet
+from filter.models.make_model import MakeVideoModule, MakeImageModule
+
 from project.utils.helper import save_inference, save_metrics, save_CM
 
 from torchmetrics.classification import (
@@ -71,9 +70,9 @@ class CNNModule(LightningModule):
             model = MakeImageModule(hparams)
             model = model.make_resnet(num_classes)
 
-        elif model == "vit":
-            model = MakeViTModule(hparams)
-            model = model.make_vit(num_classes)
+        elif model == "3dcnn":
+            model = MakeVideoModule(hparams)
+            model = model.make_resnet(num_classes)
 
         elif model == "hybrid":
             model = HybridFilterNet(n_segment=8)
