@@ -10,14 +10,12 @@ Comment:
 
 Have a good code time!
 -----
-Last Modified: Sunday June 9th 2024 6:04:51 am
+Last Modified: Thursday January 9th 2025 12:29:05 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 HISTORY:
 Date 	By 	Comments
 ------------------------------------------------
-
-16-05-2024	Kaixu Chen	do not output metrics in test_step to log file.
 
 22-03-2024	Kaixu Chen	add different class number mapping, now the class number is a hyperparameter.
 
@@ -26,13 +24,10 @@ Date 	By 	Comments
 '''
 
 from typing import Any, List, Optional, Union
-from pytorch_lightning.utilities.types import STEP_OUTPUT
+import logging
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-
-import logging
 
 from pytorch_lightning import LightningModule
 
@@ -45,8 +40,9 @@ from torchmetrics.classification import (
 )
 
 from project.models.make_model import MakeVideoModule
+from project.utils.helper import save_inference, save_metrics, save_CM
 
-class SingleModule(LightningModule):
+class TemporalMixModule(LightningModule):
     def __init__(self, hparams):
         super().__init__()
 
@@ -56,7 +52,7 @@ class SingleModule(LightningModule):
         self.num_classes = hparams.model.model_class_num
 
         # define model
-        self.video_cnn = MakeVideoModule(hparams)() 
+        self.video_cnn = MakeVideoModule(hparams).make_resnet(self.num_classes)
 
         # save the hyperparameters to the file and ckpt
         self.save_hyperparameters()
@@ -90,7 +86,7 @@ class SingleModule(LightningModule):
 
         loss = F.cross_entropy(video_preds, label.long())
 
-        self.log("train/loss", loss, on_epoch=True, on_step=True)
+        self.log("train/loss", loss, on_epoch=True, on_step=True, batch_size=b)
 
         # log metrics
         video_acc = self._accuracy(video_preds_softmax, label)
@@ -108,7 +104,7 @@ class SingleModule(LightningModule):
             }, 
             on_epoch=True, on_step=True, batch_size=b
         )
-
+        print("train loss: ", loss.item())
         return loss
 
 
@@ -131,7 +127,7 @@ class SingleModule(LightningModule):
 
         loss = F.cross_entropy(video_preds, label.long())
 
-        self.log("val/loss", loss, on_epoch=True, on_step=True)
+        self.log("val/loss", loss, on_epoch=True, on_step=True, batch_size=b)
 
         # log metrics
         video_acc = self._accuracy(video_preds_softmax, label)
@@ -150,26 +146,43 @@ class SingleModule(LightningModule):
             on_epoch=True, on_step=True, batch_size=b
         )
 
+        print("val loss: ", loss.item())
+
+    ##############
+    # test step
+    ##############
+    # the order of the hook function is:
+    # on_test_start -> test_step -> on_test_batch_end -> on_test_epoch_end -> on_test_end
+
+    def on_test_start(self) -> None:
+        """hook function for test start"""
+        self.test_outputs = []
+        self.test_pred_list = []
+        self.test_label_list = []
+
+        logging.info("test start")
+
+    def on_test_end(self) -> None:
+        """hook function for test end"""
+        logging.info("test end")
+
     def test_step(self, batch: torch.Tensor, batch_idx: int):
 
         # input and model define
-        video = batch["video"].detach()  # b, c, t, h, w
-        label = batch["label"].detach().float().squeeze()  # b
+        video = batch["video"].detach() # b, c, t, h, w
+        label = batch["label"].detach() # b
 
         b, c, t, h, w = video.shape
 
         video_preds = self.video_cnn(video)
         video_preds_softmax = torch.softmax(video_preds, dim=1)
 
-        if b == 1:
-            label = label.unsqueeze(0)
-
         # check shape 
         assert label.shape[0] == b
 
         loss = F.cross_entropy(video_preds, label.long())
 
-        self.log("test/loss", loss, on_epoch=True, on_step=True)
+        self.log("test/loss", loss, on_epoch=True, on_step=True, batch_size=b)
 
         # log metrics
         video_acc = self._accuracy(video_preds_softmax, label)
@@ -177,7 +190,7 @@ class SingleModule(LightningModule):
         video_recall = self._recall(video_preds_softmax, label)
         video_f1_score = self._f1_score(video_preds_softmax, label)
         video_confusion_matrix = self._confusion_matrix(video_preds_softmax, label)
-
+        
         self.log_dict(
             {
                 "test/video_acc": video_acc,
@@ -188,13 +201,65 @@ class SingleModule(LightningModule):
             on_epoch=True, on_step=True, batch_size=b
         )
 
-        return {
-            "video_acc": video_acc,
-            "video_precision": video_precision,
-            "video_recall": video_recall,
-            "video_f1_score": video_f1_score,
-            "video_confusion_matrix": video_confusion_matrix,
-        }
+        return video_preds
+
+    def on_test_batch_end(
+        self,
+        outputs: list[torch.Tensor],
+        batch,
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
+        """hook function for test batch end
+
+        Args:
+            outputs (torch.Tensor | logging.Mapping[str, Any] | None): current output from batch.
+            batch (Any): the data of current batch.
+            batch_idx (int): the index of current batch.
+            dataloader_idx (int, optional): the index of all dataloader. Defaults to 0.
+        """
+
+        perds = outputs
+        label = batch["label"].detach().float().squeeze()
+
+        self.test_outputs.append(outputs)
+        # tensor to list
+        for i in perds.tolist():
+            self.test_pred_list.append(i)
+        for i in label.tolist():
+            self.test_label_list.append(i)
+
+    def on_test_epoch_end(self) -> None:
+        """hook function for test epoch end"""
+
+        # save inference
+        save_inference(
+            self.test_pred_list,
+            self.test_label_list,
+            fold=self.logger.name,
+            save_path=self.hparams.hparams.train.log_path,
+        )
+        # save metrics
+        save_metrics(
+            self.test_pred_list,
+            self.test_label_list,
+            fold=self.logger.name,
+            save_path=self.hparams.hparams.train.log_path,
+            num_class=self.num_classes,
+        )
+        # save confusion matrix
+        save_CM(
+            self.test_pred_list,
+            self.test_label_list,
+            save_path=self.hparams.hparams.train.log_path,
+            num_class=self.num_classes,
+            fold=self.logger.name,
+        )
+
+        # save CAM
+        # save_CAM(self.test_pred_list, self.test_label_list, self.num_classes)
+
+        logging.info("test epoch end")
 
     def configure_optimizers(self):
         """

@@ -21,8 +21,8 @@ data:
   root_path: /workspace/data # dataset path
 
   seg_data_path: ${data.root_path}/segmentation_dataset_512/ # segmentation dataset path
-  gait_seg_data_path: ${data.root_path}/segmentation_dataset_512/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset.
-  gait_seg_index_data_path: ${data.root_path}/filter_dataset/ # training mapping path, this used for cross validation, with different class number.
+  gait_seg_data_path: ${data.root_path}/segmentation_dataset_512/json_mix_with_score/${filter.phase} # defined gait cycle json path. This path uesd be gait cycle defined dataset.
+  gait_seg_index_data_path: ${data.root_path}/filter_dataset/index_mapping # training mapping path, this used for cross validation, with different class number.
 
   num_workers: 8
   img_size: 224
@@ -52,12 +52,13 @@ train:
   # experiment: two_stream, cnn_lstm, cnn, 3dcnn
   backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream], help='the backbone of the model'
   temporal_mix: True # if use the temporal mix
+  filter: True # if use the filter method, this will be used for gait cycle defined method.
 
   experiment: ${train.backbone}_${train.temporal_mix}_${filter.phase}_${filter.backbone} # the experiment name
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
-  log_path: logs/phasemix/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  log_path: logs/classifier/${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
 
   fast_dev_run: False # if use the fast_dev_run
   fold: 3 # the fold number of the cross validation

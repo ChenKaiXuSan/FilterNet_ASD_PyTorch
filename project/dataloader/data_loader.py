@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Friday January 10th 2025 11:01:28 am
+Last Modified: Thursday July 10th 2025 9:41:08 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -200,132 +200,35 @@ class WalkDataModule(LightningDataModule):
             stage (Optional[str], optional): trainer.stage, in ('fit', 'validate', 'test', 'predict'). Defaults to None.
         """
 
-        if self._temporal_mix:
+        # train dataset
+        self.train_gait_dataset = labeled_gait_video_dataset(
+            experiment=self._experiment,
+            dataset_idx=self._dataset_idx[
+                0
+            ],  # train mapped path, include gait cycle index.
+            transform=self.mapping_transform,
+            hparams=self.opt,
+        )
 
-            # train dataset
-            self.train_gait_dataset = labeled_gait_video_dataset(
-                experiment=self._experiment,
-                dataset_idx=self._dataset_idx[
-                    0
-                ],  # train mapped path, include gait cycle index.
-                transform=self.mapping_transform,
-                hparams=self.opt,
-            )
+        # val dataset
+        self.val_gait_dataset = labeled_gait_video_dataset(
+            experiment=self._experiment,
+            dataset_idx=self._dataset_idx[
+                1
+            ],  # val mapped path, include gait cycle index.
+            transform=self.mapping_transform,
+            hparams=self.opt,
+        )
 
-            # val dataset
-            self.val_gait_dataset = labeled_gait_video_dataset(
-                experiment=self._experiment,
-                dataset_idx=self._dataset_idx[
-                    1
-                ],  # val mapped path, include gait cycle index.
-                transform=self.mapping_transform,
-                hparams=self.opt,
-            )
-
-            # test dataset
-            self.test_gait_dataset = labeled_gait_video_dataset(
-                experiment=self._experiment,
-                dataset_idx=self._dataset_idx[
-                    1
-                ],  # val mapped path, include gait cycle index.
-                transform=self.mapping_transform,
-                hparams=self.opt,
-            )
-
-        else: # ? in this experiment, do not use the whole dataset.
-
-            if "single" in self._backbone:
-
-                # train dataset
-                if "random" in self._experiment:
-                    self.train_gait_dataset = labeled_video_dataset(
-                        data_path=self._dataset_idx[2],
-                        clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-                        transform=self.train_video_transform,
-                    )
-
-                else:
-                    self.train_gait_dataset = labeled_gait_video_dataset(
-                        experiment=self._experiment,
-                        dataset_idx=self._dataset_idx[
-                            0
-                        ],  # train mapped path, include gait cycle index.
-                        transform=self.mapping_transform,
-                    )
-
-                # val dataset
-                self.val_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[3],
-                    clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-                    transform=self.val_video_transform,
-                )
-
-                # test dataset
-                self.test_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[3],
-                    clip_sampler=make_clip_sampler("uniform", self._CLIP_DURATION),
-                    transform=self.val_video_transform,
-                )
-
-            elif "late_fusion" in self._experiment:
-
-                # train dataset
-                self.train_gait_dataset = labeled_gait_video_dataset(
-                    experiment=self._experiment,
-                    dataset_idx=self._dataset_idx[
-                        0
-                    ],  # train mapped path, include gait cycle index.
-                    transform=self.mapping_transform,
-                )
-
-                # val dataset
-                self.val_gait_dataset = labeled_gait_video_dataset(
-                    experiment=self._experiment,
-                    dataset_idx=self._dataset_idx[
-                        1
-                    ],  # val mapped path, include gait cycle index.
-                    transform=self.mapping_transform,
-                )
-
-                # test dataset
-                self.test_gait_dataset = labeled_gait_video_dataset(
-                    experiment=self._experiment,
-                    dataset_idx=self._dataset_idx[
-                        1
-                    ],  # val mapped path, include gait cycle index.
-                    transform=self.mapping_transform,
-                )
-
-            elif (
-                "two_stream" in self._backbone
-                or "cnn_lstm" in self._backbone
-                or "2dcnn" in self._backbone
-            ):
-                # * Here we use 1s30 frames to get a static image
-
-                # train dataset
-                self.train_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[2],
-                    clip_sampler=make_clip_sampler("uniform", 1),
-                    transform=self.train_video_transform,
-                )
-
-                # val dataset
-                self.val_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[3],
-                    clip_sampler=make_clip_sampler("uniform", 1),
-                    transform=self.val_video_transform,
-                )
-
-                # test dataset
-                self.test_gait_dataset = labeled_video_dataset(
-                    data_path=self._dataset_idx[3],
-                    clip_sampler=make_clip_sampler("uniform", 1),
-                    transform=self.val_video_transform,
-                )
-
-            else:
-                raise ValueError("the experiment backbone is not supported.")
+        # test dataset
+        self.test_gait_dataset = labeled_gait_video_dataset(
+            experiment=self._experiment,
+            dataset_idx=self._dataset_idx[
+                1
+            ],  # val mapped path, include gait cycle index.
+            transform=self.mapping_transform,
+            hparams=self.opt,
+        )
 
     def collate_fn(self, batch):
         """this function process the batch data, and return the batch data.

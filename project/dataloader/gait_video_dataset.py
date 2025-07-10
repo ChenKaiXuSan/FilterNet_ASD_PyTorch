@@ -32,35 +32,9 @@ import torch
 from torchvision.io import read_video, write_png
 
 from project.dataloader.phase_mix import PhaseMix
+from project.dataloader.filter import Filter
 
 logger = logging.getLogger(__name__)
-
-
-def split_gait_cycle(
-    video_tensor: torch.Tensor, gait_cycle_index: list, gait_cycle: int
-):
-
-    use_idx = []
-    ans_list = []
-    if gait_cycle == 0 or len(gait_cycle_index) == 2:
-        for i in range(0, len(gait_cycle_index) - 1, 2):
-            ans_list.append(
-                video_tensor[gait_cycle_index[i] : gait_cycle_index[i + 1], ...]
-            )
-            use_idx.append(gait_cycle_index[i])
-
-    elif gait_cycle == 1:
-
-        # FIXME: maybe here do not -1 for upper limit.
-        for i in range(1, len(gait_cycle_index) - 1, 2):
-            ans_list.append(
-                video_tensor[gait_cycle_index[i] : gait_cycle_index[i + 1], ...]
-            )
-            use_idx.append(gait_cycle_index[i])
-
-    # print(f"used split gait cycle index: {use_idx}")
-
-    return ans_list, use_idx  # needed gait cycle video tensor
 
 
 class LabeledGaitVideoDataset(torch.utils.data.Dataset):
@@ -76,11 +50,18 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         self._transform = transform
         self._labeled_videos = labeled_video_paths
         self._experiment = experiment
+
         self.current_fold = hparams.train.current_fold
 
-        self.backbone, self._temporal_mix, *self.phase = experiment.split("_")
+        self.filter = hparams.train.filter
+        self.temporal_mix = hparams.train.temporal_mix
 
-        if self._temporal_mix:
+        if self.filter:
+            self._filter = Filter(hparams)
+        else:
+            self._filter = False
+
+        if self.temporal_mix:
             self._temporal_mix = PhaseMix(hparams)
         else:
             self._temporal_mix = False
@@ -119,16 +100,22 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 
         filter_info = file_info_dict["filter_info"]
 
-        # TODO: here should judge the frame with pre-trained model.
-        if "True" in self._experiment:
-            # should return the new frame, named temporal mix.
+        # FIXME: 下面的两部分功能重叠了，但是不影响使用
+        if self.filter:
+            defined_vframes = self._filter(
+                vframes, gait_cycle_index, bbox, label, filter_info
+            )
+            defined_vframes = self.move_transform(defined_vframes)
+
+        if self.temporal_mix:
+
             defined_vframes = self._temporal_mix(
                 vframes, gait_cycle_index, bbox, label, filter_info
             )
             defined_vframes = self.move_transform(defined_vframes)
 
-        else:
-            raise ValueError("experiment name is not correct")
+        if not self.filter and not self.temporal_mix:
+            defined_vframes = self.move_transform(vframes)
 
         sample_info_dict = {
             "video": defined_vframes,

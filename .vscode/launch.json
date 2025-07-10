@@ -20,14 +20,14 @@
       ]
     },
     {
-      "name": "filter_phase_mix_train",
+      "name": "classifier_3dcnn",
       "type": "debugpy",
       "request": "launch",
-      "module": "project.phasemix_main",
+      "module": "project.main",
       "justMyCode": true,
       "args": [
         "data.num_workers=0",
-        "train.gpu_num=1",
+        "train.gpu_num=0",
         "train.backbone=3dcnn",
         "filter.phase=mix",
       ]

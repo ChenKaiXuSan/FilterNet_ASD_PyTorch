@@ -44,42 +44,32 @@ class MakeVideoModule(nn.Module):
         self.model_name = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
         self.model_depth = hparams.model.model_depth
-        self.transfer_learning = hparams.train.transfer_learning
 
-    def initialize_walk_resnet(self, input_channel: int = 3) -> nn.Module:
+    def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
-        if self.transfer_learning:
-            slow = torch.hub.load(
-                "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
-            )
+        slow = torch.hub.load(
+            "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
+        )
 
-            # for the folw model and rgb model
-            slow.blocks[0].conv = nn.Conv3d(
-                input_channel,
-                64,
-                kernel_size=(1, 7, 7),
-                stride=(1, 2, 2),
-                padding=(0, 3, 3),
-                bias=False,
-            )
-            # change the knetics-400 output 400 to model class num
-            slow.blocks[-1].proj = nn.Linear(2048, self.model_class_num)
+        # for the folw model and rgb model
+        slow.blocks[0].conv = nn.Conv3d(
+            input_channel,
+            64,
+            kernel_size=(1, 7, 7),
+            stride=(1, 2, 2),
+            padding=(0, 3, 3),
+            bias=False,
+        )
+        # change the knetics-400 output 400 to model class num
+        slow.blocks[-1].proj = nn.Linear(2048, self.model_class_num)
 
-        else:
-            slow = resnet.create_resnet(
-                input_channel=input_channel,
-                model_depth=self.model_depth,
-                model_num_class=self.model_class_num,
-                norm=nn.BatchNorm3d,
-                activation=nn.ReLU,
-            )
 
         return slow
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
 
-        if self.model_name == "resnet":
-            return self.initialize_walk_resnet()
+        if self.model_name == "3dcnn":
+            return self.make_resnet()
         else:
             raise KeyError(f"the model name {self.model_name} is not in the model zoo")
 
@@ -96,17 +86,16 @@ class MakeImageModule(nn.Module):
 
         self.model_name = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
-        self.transfer_learning = hparams.train.transfer_learning
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
-        if self.transfer_learning:
-            model = torch.hub.load(
-                "pytorch/vision:v0.10.0", "resnet50", pretrained=True
-            )
-            model.conv1 = nn.Conv2d(
-                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
-            )
-            model.fc = nn.Linear(2048, self.model_class_num)
+
+        model = torch.hub.load(
+            "pytorch/vision:v0.10.0", "resnet50", pretrained=True
+        )
+        model.conv1 = nn.Conv2d(
+            input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+        )
+        model.fc = nn.Linear(2048, self.model_class_num)
 
         return model
 
@@ -129,7 +118,6 @@ class MakeOriginalTwoStream(nn.Module):
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
-        self.transfer_learning = hparams.train.transfer_learning
 
     def make_resnet(self, input_channel: int = 3):
 
@@ -159,7 +147,6 @@ class CNNLSTM(nn.Module):
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
-        self.transfer_learning = hparams.train.transfer_learning
 
         self.cnn = self.make_cnn()
         # LSTM

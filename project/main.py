@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Wednesday July 9th 2025 10:04:27 pm
+Last Modified: Thursday July 10th 2025 9:41:08 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -44,10 +44,11 @@ from project.dataloader.data_loader import WalkDataModule
 # 3D CNN model
 
 # compare experiment
-from project.trainer.train_3dcnn import TemporalMixModule
+from project.trainer.train_phase_mix import TemporalMixModule
 from project.trainer.train_two_stream import TwoStreamModule
 from project.trainer.train_cnn_lstm import CNNLstmModule
 from project.trainer.train_2dcnn import CNNModule
+from project.trainer.train_3dcnn import Res3DCNNModule
 
 from project.cross_validation import DefineCrossValidation
 
@@ -70,6 +71,8 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 
     # * select experiment
     if hparams.train.backbone == "3dcnn":
+        classification_module = Res3DCNNModule(hparams)
+    elif hparams.train.backbone == "temporal_mix":
         classification_module = TemporalMixModule(hparams)
     # * compare experiment
     elif hparams.train.backbone == "two_stream":
