@@ -27,6 +27,8 @@ from typing import Any, List
 import torch
 import torch.nn as nn
 
+from torchvision.models import resnet101, ResNet101_Weights
+
 
 class MakeVideoModule(nn.Module):
     """
@@ -91,6 +93,15 @@ class MakeImageModule(nn.Module):
         )
         model.fc = nn.Linear(2048, self.model_class_num)
 
+        return model
+
+    def make_resnet101(self, input_channel:int = 3) -> nn.Module:
+
+        model = resnet101(weights=ResNet101_Weights.DEFAULT)
+
+        model.conv1 = nn.Conv2d(input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        model.fc = nn.Linear(2048, self.model_class_num)
+    
         return model
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
