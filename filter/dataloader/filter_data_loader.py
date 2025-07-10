@@ -300,7 +300,7 @@ class WalkDataModule(LightningDataModule):
                         disease_to_num_mapping_Dict[self._class_num]["non-ASD"]
                     )
 
-        assert t == len(batch_label)
+        assert torch.cat(batch_video, dim=1).shape[1] == len(batch_label)
 
         return {
             "video": torch.cat(batch_video, dim=1),
