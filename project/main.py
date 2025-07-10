@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Friday January 10th 2025 9:08:20 am
+Last Modified: Wednesday July 9th 2025 10:04:27 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -118,10 +118,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
             int(hparams.train.gpu_num),
         ],
         accelerator="gpu",
-        # strategy="ddp_spawn",
         max_epochs=hparams.train.max_epochs,
-        # limit_train_batches=2,
-        # limit_val_batches=2,
         logger=tb_logger,  # wandb_logger,
         check_val_every_n_epoch=1,
         callbacks=[
@@ -146,7 +143,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
 @hydra.main(
     version_base=None,
     config_path="../configs",  # * the config_path is relative to location of the python script
-    config_name="phase_mix_config.yaml",
+    config_name="classifier_config.yaml",
 )
 def init_params(config):
     #######################
