@@ -25,7 +25,7 @@ data:
   gait_seg_data_path: ${data.root_path}/segmentation_dataset_512/json_mix # defined gait cycle json path. This path uesd be gait cycle defined dataset.
   gait_seg_index_data_path: ${data.root_path}/filter_dataset/ # training mapping path, this used for cross validation, with different class number.
 
-  num_workers: 12
+  num_workers: 8
   img_size: 224
   sampling: "over" # over, under, none
 

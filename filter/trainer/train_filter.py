@@ -49,10 +49,6 @@ class CNNModule(LightningModule):
         self.num_classes = hparams.model.model_class_num
         self.model_type = hparams.model.model
 
-        # model define
-        # model = MakeImageModule(hparams)
-        # self.model = model.make_resnet(self.num_classes)
-
         self.model = self.init_model(hparams, self.model_type, self.num_classes)
 
         # save the hyperparameters to the file and ckpt

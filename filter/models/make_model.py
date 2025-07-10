@@ -41,7 +41,6 @@ class MakeVideoModule(nn.Module):
         self.model_name = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
         self.model_depth = hparams.model.model_depth
-        self.transfer_learning = hparams.train.transfer_learning
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
@@ -83,7 +82,6 @@ class MakeImageModule(nn.Module):
 
         self.model_name = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
-        self.transfer_learning = hparams.train.transfer_learning
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
