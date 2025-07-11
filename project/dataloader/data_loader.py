@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Thursday July 10th 2025 9:41:08 pm
+Last Modified: Friday July 11th 2025 11:07:08 am
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -347,7 +347,6 @@ class WalkDataModule(LightningDataModule):
                 # batch_size=self._gait_cycle_batch_size,
                 batch_size = 16,
                 num_workers=self._NUM_WORKERS,
-                pin_memory=True,
                 shuffle=False,
                 drop_last=True,
                 collate_fn=self.collate_fn,
@@ -357,7 +356,6 @@ class WalkDataModule(LightningDataModule):
                 self.test_gait_dataset,
                 batch_size=self._default_batch_size,
                 num_workers=self._NUM_WORKERS,
-                pin_memory=True,
                 shuffle=False,
                 drop_last=True,
             )
