@@ -137,7 +137,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # copy for the filter score inference.
     _save_path = os.path.join("/ckpt", f"{hparams.train.phase}/{str(fold)}_best_model.ckpt")
     if os.path.exists("/ckpt") is False:
-        os.makedirs("/ckpt")
+        os.makedirs(f"/ckpt/{hparams.train.phase}")
 
     shutil.copyfile(best_model_path, _save_path)
 
