@@ -34,10 +34,9 @@ model:
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
 ckpt:
-  2dcnn: project/ckpt/2dcnn/epoch=49-step=19999.ckpt # the 2dcnn model path
-  two_stream: project/ckpt/two_stream/epoch=49-step=19999.ckpt # the two stream model path
-  cnn_lstm: project/ckpt/cnn_lstm/epoch=49-step=19999.ckpt # the cnn_lstm model path
-  3dcnn: project/ckpt/3dcnn/epoch=49-step=19999.ckpt # the
+  2dcnn: ckpt/model/resnet50-0676ba61.pth
+  two_stream: ckpt/model/raft_large_C_T_SKHT_V2-ff5fadd5.pth
+  3dcnn: ckpt/model/SLOW_8x8_R50.pyth
 
 train:
   # Training config

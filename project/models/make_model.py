@@ -28,8 +28,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from pytorchvideo.models import resnet
-
 
 class MakeVideoModule(nn.Module):
     """
@@ -63,7 +61,6 @@ class MakeVideoModule(nn.Module):
         # change the knetics-400 output 400 to model class num
         slow.blocks[-1].proj = nn.Linear(2048, self.model_class_num)
 
-
         return slow
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
@@ -89,9 +86,7 @@ class MakeImageModule(nn.Module):
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
-        model = torch.hub.load(
-            "pytorch/vision:v0.10.0", "resnet50", pretrained=True
-        )
+        model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50", pretrained=True)
         model.conv1 = nn.Conv2d(
             input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
         )
