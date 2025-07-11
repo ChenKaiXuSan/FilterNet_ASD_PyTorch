@@ -135,7 +135,11 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
      
     shutil.copyfile(best_model_path, log_best_model_path)
     # copy for the filter score inference.
-    shutil.copyfile(best_model_path, os.path.join("/ckpt",f"{hparams.train.phase}/{str(fold)}_best_model.ckpt"))
+    _save_path = os.path.join("/ckpt", f"{hparams.train.phase}/{str(fold)}_best_model.ckpt"
+    if os.path.exists("/ckpt") is False:
+        os.makedirs("/ckpt")
+
+    shutil.copyfile(best_model_path, _save_path)
 
 @hydra.main(
     version_base=None,
