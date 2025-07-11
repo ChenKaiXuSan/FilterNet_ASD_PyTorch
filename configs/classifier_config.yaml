@@ -54,7 +54,7 @@ train:
   temporal_mix: False # if use the temporal mix
   filter: True # if use the filter method, this will be used for gait cycle defined method.
 
-  experiment: ${train.backbone}_${train.temporal_mix}_${filter.phase}_${filter.backbone} # the experiment name
+  experiment: ${train.backbone}_${train.temporal_mix}_${train.filter}_${filter.phase}_${filter.backbone} # the experiment name
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 
