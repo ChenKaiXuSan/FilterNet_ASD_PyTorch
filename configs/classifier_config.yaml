@@ -29,7 +29,7 @@ data:
   sampling: "over" # over, under, none
 
   gait_cycle_batch_size: 1 # this used for gait cycle defined method.
-  default_batch_size: 32 # this used for default method, without gait cycle defined method.
+  default_batch_size: 1 # this used for default method, without gait cycle defined method.
 
 model:
   model: ${train.backbone} # the model name
@@ -51,7 +51,7 @@ train:
 
   # experiment: two_stream, cnn_lstm, cnn, 3dcnn
   backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream], help='the backbone of the model'
-  temporal_mix: True # if use the temporal mix
+  temporal_mix: False # if use the temporal mix
   filter: True # if use the filter method, this will be used for gait cycle defined method.
 
   experiment: ${train.backbone}_${train.temporal_mix}_${filter.phase}_${filter.backbone} # the experiment name

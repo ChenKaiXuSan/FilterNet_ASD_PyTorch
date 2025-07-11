@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-'''
+"""
 File: /workspace/project/project/dataloader/data_loader.py
 Project: /workspace/project/project/dataloader
 Created Date: Friday January 10th 2025
@@ -18,7 +18,7 @@ Copyright (c) 2025 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-'''
+"""
 
 from torchvision.transforms import (
     Compose,
@@ -39,6 +39,7 @@ from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset
 
 from project.dataloader.gait_video_dataset import labeled_gait_video_dataset
 
+
 class UniformTemporalSubsample(Transform):
     """Uniformly subsample ``num_samples`` indices from the temporal dimension of the video.
 
@@ -58,7 +59,7 @@ class UniformTemporalSubsample(Transform):
         self.num_samples = num_samples
 
     def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        inpt = inpt.permute(1, 0, 2, 3) # [C, T, H, W] -> [T, C, H, W]
+        inpt = inpt.permute(1, 0, 2, 3)  # [C, T, H, W] -> [T, C, H, W]
         return self._call_kernel(F.uniform_temporal_subsample, inpt, self.num_samples)
 
 
@@ -109,6 +110,7 @@ class Div255(torch.nn.Module):
         """
         return x / 255.0
 
+
 class WalkDataModule(LightningDataModule):
     def __init__(self, opt, dataset_idx: Dict = None):
         super().__init__()
@@ -137,51 +139,8 @@ class WalkDataModule(LightningDataModule):
 
         self.opt = opt
 
-        if self._temporal_mix == True:
-            self.mapping_transform = Compose(
-                [Div255(), Resize(size=[self._IMG_SIZE, self._IMG_SIZE])]
-            )
-        else:
-            self.mapping_transform = Compose(
-                [
-                    UniformTemporalSubsample(self.uniform_temporal_subsample_num),
-                    Div255(),
-                    Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
-                ]
-            )
-
-        self.train_video_transform = Compose(
-            [
-                ApplyTransformToKey(
-                    key="video",
-                    transform=Compose(
-                        [
-                            Div255(),
-                            Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
-                            UniformTemporalSubsample(
-                                self.uniform_temporal_subsample_num
-                            ),
-                        ]
-                    ),
-                ),
-            ]
-        )
-
-        self.val_video_transform = Compose(
-            [
-                ApplyTransformToKey(
-                    key="video",
-                    transform=Compose(
-                        [
-                            Div255(),
-                            Resize(size=[self._IMG_SIZE, self._IMG_SIZE]),
-                            UniformTemporalSubsample(
-                                self.uniform_temporal_subsample_num
-                            ),
-                        ]
-                    ),
-                ),
-            ]
+        self.mapping_transform = Compose(
+            [Div255(), Resize(size=[self._IMG_SIZE, self._IMG_SIZE])]
         )
 
     def prepare_data(self) -> None:
@@ -281,26 +240,16 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        if self._temporal_mix:
-            train_data_loader = DataLoader(
-                self.train_gait_dataset,
-                batch_size=self._gait_cycle_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=True,
-                drop_last=True,
-                collate_fn=self.collate_fn,
-                # worker_init_fn=lambda x: torch.initial_seed(),
-            )
-        else:
-            train_data_loader = DataLoader(
-                self.train_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=False,
-                drop_last=True,
-            )
+        train_data_loader = DataLoader(
+            self.train_gait_dataset,
+            batch_size=self._gait_cycle_batch_size,
+            num_workers=self._NUM_WORKERS,
+            pin_memory=True,
+            shuffle=True,
+            drop_last=True,
+            collate_fn=self.collate_fn,
+            # worker_init_fn=lambda x: torch.initial_seed(),
+        )
 
         return train_data_loader
 
@@ -311,26 +260,16 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        if self._temporal_mix:
-            val_data_loader = DataLoader(
-                self.val_gait_dataset,
-                # batch_size=self._gait_cycle_batch_size,
-                batch_size = 16, 
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=False,
-                drop_last=True,
-                collate_fn=self.collate_fn,
-            )
-        else:
-            val_data_loader = DataLoader(
-                self.val_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                pin_memory=True,
-                shuffle=False,
-                drop_last=True,
-            )
+        val_data_loader = DataLoader(
+            self.val_gait_dataset,
+            # batch_size=self._gait_cycle_batch_size,
+            batch_size=16,
+            num_workers=self._NUM_WORKERS,
+            pin_memory=True,
+            shuffle=False,
+            drop_last=True,
+            collate_fn=self.collate_fn,
+        )
 
         return val_data_loader
 
@@ -341,23 +280,14 @@ class WalkDataModule(LightningDataModule):
         normalizes the video before applying the scale, crop and flip augmentations.
         """
 
-        if self._temporal_mix:
-            test_data_loader = DataLoader(
-                self.test_gait_dataset,
-                # batch_size=self._gait_cycle_batch_size,
-                batch_size = 16,
-                num_workers=self._NUM_WORKERS,
-                shuffle=False,
-                drop_last=True,
-                collate_fn=self.collate_fn,
-            )
-        else:
-            test_data_loader = DataLoader(
-                self.test_gait_dataset,
-                batch_size=self._default_batch_size,
-                num_workers=self._NUM_WORKERS,
-                shuffle=False,
-                drop_last=True,
-            )
+        test_data_loader = DataLoader(
+            self.test_gait_dataset,
+            # batch_size=self._gait_cycle_batch_size,
+            batch_size=16,
+            num_workers=self._NUM_WORKERS,
+            shuffle=False,
+            drop_last=True,
+            collate_fn=self.collate_fn,
+        )
 
         return test_data_loader

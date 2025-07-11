@@ -28,8 +28,9 @@
       "args": [
         "data.num_workers=0",
         "train.gpu_num=0",
-        "train.backbone=3dcnn",
+        "train.backbone=two_stream",
         "filter.phase=mix",
+        "train.temporal_mix=false"
       ]
     },
     {

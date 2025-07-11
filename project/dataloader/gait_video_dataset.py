@@ -71,7 +71,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         if self._transform is not None:
             video_t_list = []
             for video_t in vframes:
-                transformed_img = self._transform(video_t.permute(1, 0, 2, 3))
+                transformed_img = self._transform(video_t)
                 video_t_list.append(transformed_img)
 
             return torch.stack(video_t_list, dim=0)  # c, t, h, w
