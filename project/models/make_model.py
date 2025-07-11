@@ -23,10 +23,14 @@ Date      	By	Comments
 """
 
 from typing import Any, List
+import os
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from torchvision.models import resnet50
+from pytorchvideo.models.hub import slow_r50
 
 
 class MakeVideoModule(nn.Module):
@@ -41,16 +45,25 @@ class MakeVideoModule(nn.Module):
 
         self.model_name = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
-        self.model_depth = hparams.model.model_depth
+        self.model_path = hparams.ckpt.res3dcnn  # the resnet model path
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
-        slow = torch.hub.load(
-            "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
-        )
+        if os.path.exists(self.model_path):
+            print(f"load model from {self.model_path}")
+
+            model = slow_r50(pretrained=False, input_channel=input_channel)
+            state_dict = torch.load(self.model_path, map_location="cpu")['model_state']
+            model.load_state_dict(state_dict)
+
+        else:
+
+            model = torch.hub.load(
+                "facebookresearch/pytorchvideo", "slow_r50", pretrained=True
+            )
 
         # for the folw model and rgb model
-        slow.blocks[0].conv = nn.Conv3d(
+        model.blocks[0].conv = nn.Conv3d(
             input_channel,
             64,
             kernel_size=(1, 7, 7),
@@ -59,9 +72,9 @@ class MakeVideoModule(nn.Module):
             bias=False,
         )
         # change the knetics-400 output 400 to model class num
-        slow.blocks[-1].proj = nn.Linear(2048, self.model_class_num)
+        model.blocks[-1].proj = nn.Linear(2048, self.model_class_num)
 
-        return slow
+        return model
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
 
@@ -83,14 +96,31 @@ class MakeImageModule(nn.Module):
 
         self.model_name = hparams.model.model
         self.model_class_num = hparams.model.model_class_num
+        self.model_path = hparams.ckpt.res2dcnn  # the resnet model path
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
-        model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50", pretrained=True)
-        model.conv1 = nn.Conv2d(
-            input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
-        )
-        model.fc = nn.Linear(2048, self.model_class_num)
+        if os.path.exists(self.model_path):
+            print(f"load model from {self.model_path}")
+
+            model = resnet50(pretrained=False)
+
+            state_dict = torch.load(self.model_path, map_location="cpu")
+            model.load_state_dict(state_dict)
+
+            model.conv1 = nn.Conv2d(
+                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            model.fc = nn.Linear(2048, self.model_class_num)
+        else:
+
+            model = torch.hub.load(
+                "pytorch/vision:v0.10.0", "resnet50", pretrained=True
+            )
+            model.conv1 = nn.Conv2d(
+                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            model.fc = nn.Linear(2048, self.model_class_num)
 
         return model
 
@@ -114,20 +144,29 @@ class MakeOriginalTwoStream(nn.Module):
 
         self.model_class_num = hparams.model.model_class_num
 
-    def make_resnet(self, input_channel: int = 3):
+    def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
-        model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50", pretrained=True)
+        if os.path.exists(self.model_path):
+            print(f"load model from {self.model_path}")
 
-        # from pytorchvision, use resnet 50.
-        # weights = ResNet50_Weights.DEFAULT
-        # model = resnet50(weights=weights)
+            model = resnet50(pretrained=False)
 
-        # for the folw model and rgb model
-        model.conv1 = nn.Conv2d(
-            input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
-        )
-        # change the output 400 to model class num
-        model.fc = nn.Linear(2048, self.model_class_num)
+            state_dict = torch.load(self.model_path, map_location="cpu")
+            model.load_state_dict(state_dict)
+
+            model.conv1 = nn.Conv2d(
+                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            model.fc = nn.Linear(2048, self.model_class_num)
+        else:
+
+            model = torch.hub.load(
+                "pytorch/vision:v0.10.0", "resnet50", pretrained=True
+            )
+            model.conv1 = nn.Conv2d(
+                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            model.fc = nn.Linear(2048, self.model_class_num)
 
         return model
 
@@ -143,27 +182,36 @@ class CNNLSTM(nn.Module):
 
         self.model_class_num = hparams.model.model_class_num
 
-        self.cnn = self.make_cnn()
+        self.cnn = self.make_resnet()
         # LSTM
         self.lstm = nn.LSTM(
             input_size=300, hidden_size=512, num_layers=2, batch_first=True
         )
         self.fc = nn.Linear(512, self.model_class_num)
 
-    def make_cnn(self, input_channel: int = 3):
+    def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
-        model = torch.hub.load("pytorch/vision:v0.10.0", "resnet50", pretrained=True)
+        if os.path.exists(self.model_path):
+            print(f"load model from {self.model_path}")
 
-        # from pytorchvision, use resnet 50.
-        # weights = ResNet50_Weights.DEFAULT
-        # model = resnet50(weights=weights)
+            model = resnet50(pretrained=False)
 
-        # for the folw model and rgb model
-        model.conv1 = nn.Conv2d(
-            input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
-        )
-        # change the output 400 to model class num
-        model.fc = nn.Linear(2048, 300)
+            state_dict = torch.load(self.model_path, map_location="cpu")
+            model.load_state_dict(state_dict)
+
+            model.conv1 = nn.Conv2d(
+                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            model.fc = nn.Linear(2048, self.model_class_num)
+        else:
+
+            model = torch.hub.load(
+                "pytorch/vision:v0.10.0", "resnet50", pretrained=True
+            )
+            model.conv1 = nn.Conv2d(
+                input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            model.fc = nn.Linear(2048, self.model_class_num)
 
         return model
 

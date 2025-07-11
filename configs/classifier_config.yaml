@@ -31,12 +31,11 @@ data:
 model:
   model: ${train.backbone} # the model name
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
-  model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
 ckpt:
-  2dcnn: ckpt/model/resnet50-0676ba61.pth
+  res2dcnn: ckpt/model/resnet50-0676ba61.pth
   two_stream: ckpt/model/raft_large_C_T_SKHT_V2-ff5fadd5.pth
-  3dcnn: ckpt/model/SLOW_8x8_R50.pyth
+  res3dcnn: ckpt/model/SLOW_8x8_R50.pyth
 
 train:
   # Training config
