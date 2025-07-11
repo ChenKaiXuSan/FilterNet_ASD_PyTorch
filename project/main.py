@@ -96,7 +96,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     )
 
     # some callbacks
-    progress_bar = TQDMProgressBar(refresh_rate=100)
+    progress_bar = TQDMProgressBar(refresh_rate=1)
     rich_model_summary = RichModelSummary(max_depth=2)
 
     # define the checkpoint becavier.

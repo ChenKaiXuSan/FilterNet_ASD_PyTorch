@@ -10,7 +10,7 @@ Comment:
 
 Have a good code time :)
 -----
-Last Modified: Friday January 10th 2025 9:08:20 am
+Last Modified: Thursday July 10th 2025 9:41:08 pm
 Modified By: the developer formerly known as Kaixu Chen at <chenkaixusan@gmail.com>
 -----
 Copyright (c) 2025 The University of Tsukuba
@@ -19,5 +19,3 @@ HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
 '''
-
-from project.dataloader.gait_video_dataset import *

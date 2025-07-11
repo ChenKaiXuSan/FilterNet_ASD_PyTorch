@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-'''
+"""
 File: /workspace/skeleton/project/trainer/train_two_stream copy.py
 Project: /workspace/skeleton/project/trainer
 Created Date: Sunday June 9th 2024
@@ -18,14 +18,11 @@ Copyright (c) 2024 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-'''
+"""
 
 import torch
 import torch.nn.functional as F
 from pytorch_lightning import LightningModule
-
-from torchvision.io import write_video
-from torchvision.utils import save_image, flow_to_image
 
 from project.models.make_model import MakeImageModule
 
@@ -36,6 +33,7 @@ from torchmetrics.classification import (
     MulticlassF1Score,
     MulticlassConfusionMatrix,
 )
+
 
 class CNNModule(LightningModule):
 
@@ -51,7 +49,7 @@ class CNNModule(LightningModule):
 
         model = MakeImageModule(hparams)
         self.model = model.make_resnet(self.num_classes)
-        
+
         # save the hyperparameters to the file and ckpt
         self.save_hyperparameters()
 
@@ -76,7 +74,7 @@ class CNNModule(LightningModule):
             loss: the calc loss
         """
 
-        video = batch["video"].detach() # b, c, t, h, w
+        video = batch["video"].detach()  # b, c, t, h, w
         label = batch["label"].detach()  # b, c, t, h, w
         label = label.repeat_interleave(video.size()[2])
 
@@ -112,7 +110,7 @@ class CNNModule(LightningModule):
             batch (3D tensor): b, c, t, h, w
             batch_idx (_type_): _description_
         """
-         # input and model define
+        # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         label = batch["label"].detach()  # b
 
@@ -148,19 +146,21 @@ class CNNModule(LightningModule):
         b, c, t, h, w = video.shape
 
         re_video = video.reshape(b * t, c, h, w)
-        # eval model, feed data here
+
         if self.training:
+
+            inv = b
+            if re_video.size()[0] > inv:
+                re_video = re_video[:inv, :, :, :]
+                label = label[:inv]
+
             preds = self.model(re_video)
-            
+
         else:
             with torch.no_grad():
                 preds = self.model(re_video)
 
-        # squeeze(dim=-1) to keep the torch.Size([1]), not null.
-
-        loss = F.cross_entropy(
-            preds.squeeze(dim=-1), label.long()
-        )
+        loss = F.cross_entropy(preds.squeeze(dim=-1), label.long())
 
         self.save_log(preds, label, loss)
 

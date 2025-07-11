@@ -28,39 +28,12 @@ from torchvision.transforms import (
 from typing import Any, Callable, Dict, Optional
 from pytorch_lightning import LightningDataModule
 
-from omegaconf import OmegaConf
 
 import torch
 from torch.utils.data import DataLoader
-from torchvision.transforms.v2 import functional as F, Transform
-
-from pytorchvideo.data import make_clip_sampler
-from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset
 
 from project.dataloader.gait_video_dataset import labeled_gait_video_dataset
-
-
-class UniformTemporalSubsample(Transform):
-    """Uniformly subsample ``num_samples`` indices from the temporal dimension of the video.
-
-    Videos are expected to be of shape ``[..., T, C, H, W]`` where ``T`` denotes the temporal dimension.
-
-    When ``num_samples`` is larger than the size of temporal dimension of the video, it
-    will sample frames based on nearest neighbor interpolation.
-
-    Args:
-        num_samples (int): The number of equispaced samples to be selected
-    """
-
-    _transformed_types = (torch.Tensor,)
-
-    def __init__(self, num_samples: int):
-        super().__init__()
-        self.num_samples = num_samples
-
-    def _transform(self, inpt: Any, params: Dict[str, Any]) -> Any:
-        inpt = inpt.permute(1, 0, 2, 3)  # [C, T, H, W] -> [T, C, H, W]
-        return self._call_kernel(F.uniform_temporal_subsample, inpt, self.num_samples)
+from project.dataloader.utils import UniformTemporalSubsample, Div255, ApplyTransformToKey
 
 
 disease_to_num_mapping_Dict: Dict = {
@@ -70,72 +43,20 @@ disease_to_num_mapping_Dict: Dict = {
 }
 
 
-class ApplyTransformToKey:
-    """
-    Applies transform to key of dictionary input.
-
-    Args:
-        key (str): the dictionary key the transform is applied to
-        transform (callable): the transform that is applied
-
-    Example:
-        >>>   transforms.ApplyTransformToKey(
-        >>>       key='video',
-        >>>       transform=UniformTemporalSubsample(num_video_samples),
-        >>>   )
-    """
-
-    def __init__(self, key: str, transform: Callable):
-        self._key = key
-        self._transform = transform
-
-    def __call__(self, x: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        x[self._key] = self._transform(x[self._key])
-        return x
-
-
-class Div255(torch.nn.Module):
-    """
-    ``nn.Module`` wrapper for ``pytorchvideo.transforms.functional.div_255``.
-    """
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Scale clip frames from [0, 255] to [0, 1].
-        Args:
-            x (Tensor): A tensor of the clip's RGB frames with shape:
-                (C, T, H, W).
-        Returns:
-            x (Tensor): Scaled tensor by dividing 255.
-        """
-        return x / 255.0
-
-
 class WalkDataModule(LightningDataModule):
     def __init__(self, opt, dataset_idx: Dict = None):
         super().__init__()
 
-        # self._seg_path = opt.data.seg_data_path
-        # self._gait_seg_path = opt.data.gait_seg_data_path
-
-        # ? 感觉batch size对最后的结果有影响，所以分开使用不同的batch size
-        self._gait_cycle_batch_size = opt.data.gait_cycle_batch_size
-        self._default_batch_size = opt.data.default_batch_size
+        self._batch_size = opt.data.batch_size
 
         self._NUM_WORKERS = opt.data.num_workers
         self._IMG_SIZE = opt.data.img_size
-
-        # frame rate
-        self._CLIP_DURATION = opt.train.clip_duration
-        self.uniform_temporal_subsample_num = opt.train.uniform_temporal_subsample_num
 
         # * this is the dataset idx, which include the train/val dataset idx.
         self._dataset_idx = dataset_idx
         self._class_num = opt.model.model_class_num
 
         self._experiment = opt.train.experiment
-        self._backbone = opt.train.backbone
-        self._temporal_mix = opt.train.temporal_mix
 
         self.opt = opt
 
@@ -242,7 +163,7 @@ class WalkDataModule(LightningDataModule):
 
         train_data_loader = DataLoader(
             self.train_gait_dataset,
-            batch_size=self._gait_cycle_batch_size,
+            batch_size=self._batch_size,
             num_workers=self._NUM_WORKERS,
             pin_memory=True,
             shuffle=True,
@@ -262,8 +183,7 @@ class WalkDataModule(LightningDataModule):
 
         val_data_loader = DataLoader(
             self.val_gait_dataset,
-            # batch_size=self._gait_cycle_batch_size,
-            batch_size=16,
+            batch_size=self._batch_size,
             num_workers=self._NUM_WORKERS,
             pin_memory=True,
             shuffle=False,
@@ -282,8 +202,7 @@ class WalkDataModule(LightningDataModule):
 
         test_data_loader = DataLoader(
             self.test_gait_dataset,
-            # batch_size=self._gait_cycle_batch_size,
-            batch_size=16,
+            batch_size=self._batch_size,
             num_workers=self._NUM_WORKERS,
             shuffle=False,
             drop_last=True,

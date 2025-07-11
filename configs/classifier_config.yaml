@@ -5,12 +5,10 @@ hydra:
   job:
     chdir: false
   sweep:
-    dir: logs/phasemix/
-    subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${train.log_path}
   sweeper:
-    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
     params:
-      filter.phase: mix, stance, swing, whole
+      train.backbone: 3dcnn, 2dcnn, cnn_lstm, two_stream
 
 optimizer:
   lr: 0.0001
@@ -21,25 +19,25 @@ data:
   root_path: /workspace/data # dataset path
 
   seg_data_path: ${data.root_path}/segmentation_dataset_512/ # segmentation dataset path
-  gait_seg_data_path: ${data.root_path}/segmentation_dataset_512/json_mix_with_score/${filter.phase} # defined gait cycle json path. This path uesd be gait cycle defined dataset.
+  gait_seg_data_path: ${data.root_path}/segmentation_dataset_512/json_mix_with_score/${train.filter_method} # defined gait cycle json path. This path uesd be gait cycle defined dataset.
   gait_seg_index_data_path: ${data.root_path}/filter_dataset/index_mapping # training mapping path, this used for cross validation, with different class number.
 
   num_workers: 8
   img_size: 224
   sampling: "over" # over, under, none
 
-  gait_cycle_batch_size: 1 # this used for gait cycle defined method.
-  default_batch_size: 1 # this used for default method, without gait cycle defined method.
+  batch_size: 1
 
 model:
   model: ${train.backbone} # the model name
   model_class_num: 3 # the class num of model. 2 > [ASD, non_ASD]. 3 > [ASD, DHS, LCS_HipOA]. 4 > [ASD, DHS, LCS_HipOA, normal]
   model_depth: 50 # choices=[50, 101, 152], help='the depth of used model'
 
-filter:
-  phase: "mix" # stance, swing, mix, whole
-  path: ckpt/
-  backbone: 2dcnn # choices=[3dcnn, 2dcnn, vit], help='the backbone of the model'
+ckpt:
+  2dcnn: project/ckpt/2dcnn/epoch=49-step=19999.ckpt # the 2dcnn model path
+  two_stream: project/ckpt/two_stream/epoch=49-step=19999.ckpt # the two stream model path
+  cnn_lstm: project/ckpt/cnn_lstm/epoch=49-step=19999.ckpt # the cnn_lstm model path
+  3dcnn: project/ckpt/3dcnn/epoch=49-step=19999.ckpt # the
 
 train:
   # Training config
@@ -53,8 +51,9 @@ train:
   backbone: 3dcnn # choices=[3dcnn, 2dcnn, cnn_lstm, two_stream], help='the backbone of the model'
   temporal_mix: False # if use the temporal mix
   filter: True # if use the filter method, this will be used for gait cycle defined method.
+  filter_method: mix # mix, stance, swing, whole
 
-  experiment: ${train.backbone}_${train.temporal_mix}_${train.filter}_${filter.phase}_${filter.backbone} # the experiment name
+  experiment: ${train.backbone}_${train.temporal_mix}_${train.filter} # the experiment name
 
   gpu_num: 0 # choices=[0, 1], help='the gpu number whicht to train'
 

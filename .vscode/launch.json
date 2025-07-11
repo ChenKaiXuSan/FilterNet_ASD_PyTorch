@@ -20,7 +20,7 @@
       ]
     },
     {
-      "name": "classifier_3dcnn",
+      "name": "classifier",
       "type": "debugpy",
       "request": "launch",
       "module": "project.main",
@@ -28,8 +28,7 @@
       "args": [
         "data.num_workers=0",
         "train.gpu_num=0",
-        "train.backbone=two_stream",
-        "filter.phase=mix",
+        "train.backbone=3dcnn",
         "train.temporal_mix=false"
       ]
     },
