@@ -26,7 +26,8 @@ data:
   img_size: 224
   sampling: "over" # over, under, none
 
-  batch_size: 1
+  train_batch_size: 1
+  val_batch_size: 8
 
 model:
   model: ${train.backbone} # the model name

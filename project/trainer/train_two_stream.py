@@ -22,6 +22,8 @@ HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
 """
+from typing import Any, List, Optional, Union
+import logging
 
 import torch
 import torch.nn.functional as F
@@ -38,6 +40,11 @@ from torchmetrics.classification import (
     MulticlassF1Score,
     MulticlassConfusionMatrix,
 )
+
+from project.helper import save_helper
+
+logger = logging.getLogger(__name__)
+
 
 class TwoStreamModule(LightningModule):
 
@@ -80,11 +87,11 @@ class TwoStreamModule(LightningModule):
             loss: the calc loss
         """
 
-        video = batch["video"].detach() # b, c, t, h, w
+        video = batch["video"].detach()  # b, c, t, h, w
         label = batch["label"].detach()  # b, c, t, h, w
         label = label.repeat_interleave(video.size()[2] - 1)
 
-        loss = self.single_logic(label, video)
+        preds_softmax, preds, loss = self.single_logic(label, video)
 
         return loss
 
@@ -107,7 +114,26 @@ class TwoStreamModule(LightningModule):
 
         # not use the last frame
         label = label.repeat_interleave(video.size()[2] - 1)
-        loss = self.single_logic(label, video)
+
+        preds_softmax, preds, loss = self.single_logic(label, video)
+
+    ##############
+    # test step
+    ##############
+    # the order of the hook function is:
+    # on_test_start -> test_step -> on_test_batch_end -> on_test_epoch_end -> on_test_end
+
+    def on_test_start(self) -> None:
+        """hook function for test start"""
+        self.test_outputs: list[torch.Tensor] = []
+        self.test_pred_list: list[torch.Tensor] = []
+        self.test_label_list: list[torch.Tensor] = []
+
+        logger.info("test start")
+
+    def on_test_end(self) -> None:
+        """hook function for test end"""
+        logger.info("test end")
 
     def test_step(self, batch, batch_idx):
         """
@@ -117,13 +143,53 @@ class TwoStreamModule(LightningModule):
             batch (3D tensor): b, c, t, h, w
             batch_idx (_type_): _description_
         """
-         # input and model define
+        # input and model define
         video = batch["video"].detach()  # b, c, t, h, w
         label = batch["label"].detach()  # b
 
         # not use the last frame
         label = label.repeat_interleave(video.size()[2] - 1)
-        loss = self.single_logic(label, video)
+
+        preds_softmax, preds, loss = self.single_logic(label, video)
+
+        return preds_softmax, preds
+
+    def on_test_batch_end(
+        self,
+        outputs: list[torch.Tensor],
+        batch: Any,
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> None:
+        """hook function for test batch end
+
+        Args:
+            outputs (torch.Tensor | logging.Mapping[str, Any] | None): current output from batch.
+            batch (Any): the data of current batch.
+            batch_idx (int): the index of current batch.
+            dataloader_idx (int, optional): the index of all dataloader. Defaults to 0.
+        """
+
+        pred_softmax, pred = outputs
+        label = batch["label"].detach().float()
+
+        self.test_outputs.append(outputs)
+        self.test_pred_list.append(pred_softmax)
+        self.test_label_list.append(label)
+
+    def on_test_epoch_end(self) -> None:
+        """hook function for test epoch end"""
+
+        # save the metrics to file
+        save_helper(
+            all_pred=self.test_pred_list,
+            all_label=self.test_label_list,
+            fold=self.logger.root_dir.split("/")[-1],
+            save_path=self.logger.save_dir,
+            num_class=self.num_classes,
+        )
+
+        logger.info("test epoch end")
 
     def configure_optimizers(self):
         """
@@ -143,10 +209,6 @@ class TwoStreamModule(LightningModule):
                 "monitor": "val/loss",
             },
         }
-        # return torch.optim.SGD(self.parameters(), lr=self.lr)
-
-    def _get_name(self):
-        return self.model_type
 
     def single_logic(self, label: torch.Tensor, video: torch.Tensor):
 
@@ -180,18 +242,14 @@ class TwoStreamModule(LightningModule):
                 pred_video_flow = self.model_flow(single_flow)
 
         # squeeze(dim=-1) to keep the torch.Size([1]), not null.
-        loss_rgb = F.cross_entropy(
-            pred_video_rgb.squeeze(dim=-1), label.long()
-        )
-        loss_flow = F.cross_entropy(
-            pred_video_flow.squeeze(dim=-1), label.long()
-        )
+        loss_rgb = F.cross_entropy(pred_video_rgb.squeeze(dim=-1), label.long())
+        loss_flow = F.cross_entropy(pred_video_flow.squeeze(dim=-1), label.long())
 
         loss = loss_rgb + loss_flow
         pred_total = (pred_video_rgb + pred_video_flow) / 2
         self.save_log(pred_total, label, loss)
 
-        return loss
+        return torch.softmax(pred_total, dim=-1), pred_total, loss
 
     def save_log(self, pred: torch.Tensor, label: torch.Tensor, loss):
 

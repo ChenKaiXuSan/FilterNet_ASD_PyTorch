@@ -33,7 +33,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from project.dataloader.gait_video_dataset import labeled_gait_video_dataset
-from project.dataloader.utils import UniformTemporalSubsample, Div255, ApplyTransformToKey
+from project.dataloader.utils import Div255
 
 
 disease_to_num_mapping_Dict: Dict = {
@@ -47,10 +47,11 @@ class WalkDataModule(LightningDataModule):
     def __init__(self, opt, dataset_idx: Dict = None):
         super().__init__()
 
-        self._batch_size = opt.data.batch_size
+        self._train_batch_size = opt.data.train_batch_size
+        self._val_batch_size = opt.data.val_batch_size
 
-        self._NUM_WORKERS = opt.data.num_workers
-        self._IMG_SIZE = opt.data.img_size
+        self._num_workers = opt.data.num_workers
+        self._img_size = opt.data.img_size
 
         # * this is the dataset idx, which include the train/val dataset idx.
         self._dataset_idx = dataset_idx
@@ -61,7 +62,7 @@ class WalkDataModule(LightningDataModule):
         self.opt = opt
 
         self.mapping_transform = Compose(
-            [Div255(), Resize(size=[self._IMG_SIZE, self._IMG_SIZE])]
+            [Div255(), Resize(size=[self._img_size, self._img_size])]
         )
 
     def prepare_data(self) -> None:
@@ -133,9 +134,7 @@ class WalkDataModule(LightningDataModule):
 
             batch_video.append(i["video"])
             for _ in range(gait_num):
-
                 if disease in disease_to_num_mapping_Dict[self._class_num].keys():
-
                     batch_label.append(
                         disease_to_num_mapping_Dict[self._class_num][disease]
                     )
@@ -163,13 +162,12 @@ class WalkDataModule(LightningDataModule):
 
         train_data_loader = DataLoader(
             self.train_gait_dataset,
-            batch_size=self._batch_size,
-            num_workers=self._NUM_WORKERS,
+            batch_size=self._train_batch_size,
+            num_workers=self._num_workers,
             pin_memory=True,
             shuffle=True,
             drop_last=True,
             collate_fn=self.collate_fn,
-            # worker_init_fn=lambda x: torch.initial_seed(),
         )
 
         return train_data_loader
@@ -183,11 +181,11 @@ class WalkDataModule(LightningDataModule):
 
         val_data_loader = DataLoader(
             self.val_gait_dataset,
-            batch_size=self._batch_size,
-            num_workers=self._NUM_WORKERS,
+            batch_size=self._val_batch_size,
+            num_workers=self._num_workers,
             pin_memory=True,
             shuffle=False,
-            drop_last=True,
+            drop_last=False,
             collate_fn=self.collate_fn,
         )
 
@@ -202,10 +200,10 @@ class WalkDataModule(LightningDataModule):
 
         test_data_loader = DataLoader(
             self.test_gait_dataset,
-            batch_size=self._batch_size,
-            num_workers=self._NUM_WORKERS,
+            batch_size=self._val_batch_size,
+            num_workers=self._num_workers,
             shuffle=False,
-            drop_last=True,
+            drop_last=False,
             collate_fn=self.collate_fn,
         )
 

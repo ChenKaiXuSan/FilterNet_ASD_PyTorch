@@ -29,7 +29,8 @@
         "data.num_workers=0",
         "train.gpu_num=0",
         "train.backbone=2dcnn",
-        "train.temporal_mix=false"
+        "train.temporal_mix=false",
+        "data.val_batch_size=8",
       ]
     },
     {

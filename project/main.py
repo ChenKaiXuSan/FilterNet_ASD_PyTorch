@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-'''
+"""
 File: /workspace/project/project/main.py
 Project: /workspace/project/project
 Created Date: Thursday January 9th 2025
@@ -18,7 +18,7 @@ Copyright (c) 2025 The University of Tsukuba
 HISTORY:
 Date      	By	Comments
 ----------	---	---------------------------------------------------------
-'''
+"""
 
 import os
 import logging
@@ -41,16 +41,15 @@ from project.dataloader.data_loader import WalkDataModule
 # select different experiment trainer
 #####################################
 
-# 3D CNN model
-
 # compare experiment
-from project.trainer.train_phase_mix import TemporalMixModule
 from project.trainer.train_two_stream import TwoStreamModule
 from project.trainer.train_cnn_lstm import CNNLstmModule
 from project.trainer.train_2dcnn import CNNModule
 from project.trainer.train_3dcnn import Res3DCNNModule
 
 from project.cross_validation import DefineCrossValidation
+
+logger = logging.getLogger(__name__)
 
 
 def train(hparams: DictConfig, dataset_idx, fold: int):
@@ -72,8 +71,6 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
     # * select experiment
     if hparams.train.backbone == "3dcnn":
         classification_module = Res3DCNNModule(hparams)
-    elif hparams.train.backbone == "temporal_mix":
-        classification_module = TemporalMixModule(hparams)
     # * compare experiment
     elif hparams.train.backbone == "two_stream":
         classification_module = TwoStreamModule(hparams)
@@ -124,7 +121,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         ],
         accelerator="gpu",
         max_epochs=hparams.train.max_epochs,
-        logger=tb_logger,  # wandb_logger,
+        logger=tb_logger,
         check_val_every_n_epoch=1,
         callbacks=[
             progress_bar,
@@ -145,6 +142,7 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         # ckpt_path="best",
     )
 
+
 @hydra.main(
     version_base=None,
     config_path="../configs",  # * the config_path is relative to location of the python script
@@ -157,9 +155,9 @@ def init_params(config):
 
     fold_dataset_idx = DefineCrossValidation(config)()
 
-    logging.info("#" * 50)
-    logging.info("Start train all fold")
-    logging.info("#" * 50)
+    logger.info("#" * 50)
+    logger.info("Start train all fold")
+    logger.info("#" * 50)
 
     #########
     # K fold
@@ -167,19 +165,19 @@ def init_params(config):
     # * for one fold, we first train/val model, then save the best ckpt preds/label into .pt file.
 
     for fold, dataset_value in fold_dataset_idx.items():
-        logging.info("#" * 50)
-        logging.info("Start train fold: {}".format(fold))
-        logging.info("#" * 50)
+        logger.info("#" * 50)
+        logger.info("Start train fold: {}".format(fold))
+        logger.info("#" * 50)
 
         train(config, dataset_value, fold)
 
-        logging.info("#" * 50)
-        logging.info("finish train fold: {}".format(fold))
-        logging.info("#" * 50)
+        logger.info("#" * 50)
+        logger.info("finish train fold: {}".format(fold))
+        logger.info("#" * 50)
 
-    logging.info("#" * 50)
-    logging.info("finish train all fold")
-    logging.info("#" * 50)
+    logger.info("#" * 50)
+    logger.info("finish train all fold")
+    logger.info("#" * 50)
 
 
 if __name__ == "__main__":
