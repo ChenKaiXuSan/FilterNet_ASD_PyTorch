@@ -152,7 +152,7 @@ class TwoStreamModule(LightningModule):
 
         preds_softmax, preds, loss = self.single_logic(label, video)
 
-        return preds_softmax, preds
+        return preds_softmax, preds, label
 
     def on_test_batch_end(
         self,
@@ -170,8 +170,7 @@ class TwoStreamModule(LightningModule):
             dataloader_idx (int, optional): the index of all dataloader. Defaults to 0.
         """
 
-        pred_softmax, pred = outputs
-        label = batch["label"].detach().float()
+        pred_softmax, pred, label = outputs
 
         self.test_outputs.append(outputs)
         self.test_pred_list.append(pred_softmax)

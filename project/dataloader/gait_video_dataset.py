@@ -52,6 +52,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         self._experiment = experiment
 
         self.current_fold = hparams.train.current_fold
+        self.root_path = hparams.data.root_path
 
         self.filter = hparams.train.filter
         self.temporal_mix = hparams.train.temporal_mix
@@ -91,12 +92,19 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
         # load video info from json file
         video_name = file_info_dict["video_name"]
         video_path = file_info_dict["video_path"]
-        vframes, _, _ = read_video(video_path, output_format="TCHW", pts_unit="sec")
         label = file_info_dict["label"]
         disease = file_info_dict["disease"]
         gait_cycle_index = file_info_dict["gait_cycle_index"]
         bbox_none_index = file_info_dict["none_index"]
         bbox = file_info_dict["bbox"]
+
+        # replace the video path with the full path
+        try:
+            video_path = video_path.replace("/workspace/data", self.root_path)
+            vframes, _, _ = read_video(video_path, output_format="TCHW", pts_unit="sec")
+        except Exception as e:
+            logger.error(f"Error reading video {video_path}: {e}")
+            raise RuntimeError(f"Failed to read video {video_path}")
 
         filter_info = file_info_dict["filter_info"]
 
