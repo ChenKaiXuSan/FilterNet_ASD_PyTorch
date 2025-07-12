@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -A SKIING                        # ✅ 项目名（必须修改）
 #PBS -q gen_S                        # ✅ 队列名（gpu / debug / gen_S）
-#PBS -l elapstim_req=10:00:00         # ⏱ 运行时间限制（最多 24 小时）
+#PBS -l elapstim_req=24:00:00         # ⏱ 运行时间限制（最多 24 小时）
 #PBS -N train_classifier                     # 🏷 作业名称
 #PBS -t 0-3
 #PBS -o logs/pegasus/train_classifier_out.log            # 📤 标准输出日志
@@ -42,4 +42,4 @@ echo "Selected backbone: $phase_method"
 root_path=/work/SKIING/chenkaixu/data/asd_dataset
 
 # === 运行你的训练脚本（Hydra 参数可以加在后面）===
-python -m project.main data.root_path=${root_path} train.backbone=${phase_method} train.fold=3 data.num_workers=$((NUM_WORKERS / 3))
+python -m project.main data.root_path=${root_path} train.backbone=${phase_method} train.fold=5 data.num_workers=$((NUM_WORKERS / 3))

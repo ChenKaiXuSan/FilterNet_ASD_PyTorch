@@ -134,13 +134,13 @@ def train(hparams: DictConfig, dataset_idx, fold: int):
         limit_test_batches=2,  # limit test batches for debug.
     )
 
-    # trainer.fit(classification_module, data_module)
+    trainer.fit(classification_module, data_module)
 
     # the validate method will wirte in the same log twice, so use the test method.
     trainer.test(
         classification_module,
         data_module,
-        # ckpt_path="best",
+        ckpt_path="best",
     )
 
 
