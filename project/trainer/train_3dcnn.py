@@ -94,7 +94,7 @@ class Res3DCNNModule(LightningModule):
 
         loss = F.cross_entropy(video_preds, label.long())
 
-        self.log("train/loss", loss, on_epoch=True, on_step=True)
+        self.log("train/loss", loss, on_epoch=True, on_step=True, batch_size=b)
 
         # log metrics
         video_acc = self._accuracy(video_preds_softmax, label)
@@ -136,7 +136,7 @@ class Res3DCNNModule(LightningModule):
 
         loss = F.cross_entropy(video_preds, label.long())
 
-        self.log("val/loss", loss, on_epoch=True, on_step=True)
+        self.log("val/loss", loss, on_epoch=True, on_step=True, batch_size=b)
 
         # log metrics
         video_acc = self._accuracy(video_preds_softmax, label)
