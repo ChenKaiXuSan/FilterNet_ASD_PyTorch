@@ -23,19 +23,39 @@ Date      	By	Comments
 import torch.nn as nn
 import torch
 
-from torchvision.models.optical_flow import Raft_Large_Weights, raft_large, raft_small
+from torchvision.models.optical_flow import Raft_Large_Weights, raft_large
 
 
 class Optical_flow(nn.Module):
 
-    def __init__(self):
+    def __init__(self, of_ckpt: str = None):
         super().__init__()
 
         self.weights = Raft_Large_Weights.DEFAULT
         self.transforms = self.weights.transforms()
+        self.optical_flow_path = of_ckpt
 
         # define the network
-        self.model = raft_large(weights=self.weights, progress=False).cuda()
+        self.model = self.init_model(self.weights, self.optical_flow_path)
+
+    @staticmethod
+    def init_model(weights, of_path=None):
+        """
+        load the optical flow model.
+        """
+
+        if of_path is not None:
+            model = raft_large(weights=None, progress=False).cuda()
+            try:
+                model.load_state_dict(torch.load(of_path, map_location="cpu"))
+                print(f"Optical flow model loaded from {of_path}")
+            except Exception as e:
+                print(f"Error loading optical flow model: {e}")
+
+        else:
+            model = raft_large(weights=weights, progress=False).cuda()
+
+        return model
 
     def get_Optical_flow(self, frame_batch):
         """

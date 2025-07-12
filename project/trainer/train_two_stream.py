@@ -57,7 +57,7 @@ class TwoStreamModule(LightningModule):
         self.num_classes = hparams.model.model_class_num
 
         # model define
-        self.optical_flow_model = Optical_flow()
+        self.optical_flow_model = Optical_flow(hparams.ckpt.optical_flow)
 
         self.model = MakeOriginalTwoStream(hparams)
         self.model_rgb = self.model.make_resnet(3)

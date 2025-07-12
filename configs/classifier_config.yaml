@@ -35,7 +35,7 @@ model:
 
 ckpt:
   res2dcnn: ckpt/model/resnet50-0676ba61.pth
-  two_stream: ckpt/model/raft_large_C_T_SKHT_V2-ff5fadd5.pth
+  optical_flow: ckpt/model/raft_large_C_T_SKHT_V2-ff5fadd5.pth
   res3dcnn: ckpt/model/SLOW_8x8_R50.pyth
 
 train:
