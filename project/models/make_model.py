@@ -143,6 +143,7 @@ class MakeOriginalTwoStream(nn.Module):
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
+        self.model_path = hparams.ckpt.res2dcnn
 
     def make_resnet(self, input_channel: int = 3) -> nn.Module:
 
@@ -181,6 +182,7 @@ class CNNLSTM(nn.Module):
         super().__init__()
 
         self.model_class_num = hparams.model.model_class_num
+        self.model_path = hparams.ckpt.res2dcnn
 
         self.cnn = self.make_resnet()
         # LSTM

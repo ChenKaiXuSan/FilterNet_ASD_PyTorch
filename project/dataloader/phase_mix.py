@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
 import torch
 
-from torchvision.io import read_video, write_png
+logger = logging.getLogger(__name__)
 
 
 def split_gait_cycle(
