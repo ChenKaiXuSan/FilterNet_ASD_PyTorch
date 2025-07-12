@@ -100,8 +100,12 @@ class Filter:
             video_tensor, gait_cycle_index, 1
         )
 
-        first_scores = filter_info["first_phase"][f"fold{self.current_fold}"]
-        second_scores = filter_info["second_phase"][f"fold{self.current_fold}"]
+        # FIXME: the fold not currently used
+        # first_scores = filter_info["first_phase"][f"fold{self.current_fold}"]
+        # second_scores = filter_info["second_phase"][f"fold{self.current_fold}"]
+
+        first_scores = filter_info["first_phase"][f"fold0"]
+        second_scores = filter_info["second_phase"][f"fold0"]
 
         first_phase_filtered_scores = first_scores["filtered_scores"]
         first_phase_sorted_idx = first_scores["sorted_idx"]
