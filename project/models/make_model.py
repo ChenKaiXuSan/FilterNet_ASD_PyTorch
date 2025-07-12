@@ -204,7 +204,7 @@ class CNNLSTM(nn.Module):
             model.conv1 = nn.Conv2d(
                 input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
             )
-            model.fc = nn.Linear(2048, self.model_class_num)
+            model.fc = nn.Linear(2048, 300)
         else:
 
             model = torch.hub.load(
@@ -213,7 +213,7 @@ class CNNLSTM(nn.Module):
             model.conv1 = nn.Conv2d(
                 input_channel, 64, kernel_size=7, stride=2, padding=3, bias=False
             )
-            model.fc = nn.Linear(2048, self.model_class_num)
+            model.fc = nn.Linear(2048, 300)
 
         return model
 

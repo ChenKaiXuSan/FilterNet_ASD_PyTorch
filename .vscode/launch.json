@@ -28,7 +28,7 @@
       "args": [
         "data.num_workers=0",
         "train.gpu_num=0",
-        "train.backbone=3dcnn",
+        "train.backbone=cnn_lstm",
         "train.temporal_mix=false",
         "data.val_batch_size=8",
       ]
