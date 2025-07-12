@@ -5,7 +5,8 @@ hydra:
   job:
     chdir: false
   sweep:
-    dir: ${train.log_path}
+    dir: logs/classifier/
+    subdir: ${train.experiment}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweeper:
     params:
       train.backbone: 3dcnn, 2dcnn, cnn_lstm, two_stream
