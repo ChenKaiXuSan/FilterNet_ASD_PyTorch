@@ -200,7 +200,6 @@ class CNNLstmModule(LightningModule):
                 "monitor": "val/loss",
             },
         }
-        # return torch.optim.SGD(self.parameters(), lr=self.lr)
 
     def single_logic(self, label: torch.Tensor, video: torch.Tensor):
 

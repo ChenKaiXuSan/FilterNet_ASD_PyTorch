@@ -271,7 +271,6 @@ class Res3DCNNModule(LightningModule):
                 "scheduler": torch.optim.lr_scheduler.CosineAnnealingLR(
                     optimizer,
                     T_max=self.trainer.estimated_stepping_batches,
-                    verbose=True,
                 ),
                 "monitor": "train/loss",
             },
