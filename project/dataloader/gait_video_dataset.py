@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, Type
 
 import torch
 
-from torchvision.io import read_video, write_png
+from torchvision.io import read_video
 
 from project.dataloader.phase_mix import PhaseMix
 from project.dataloader.filter import Filter
@@ -56,6 +56,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
 
         self.filter = hparams.train.filter
         self.temporal_mix = hparams.train.temporal_mix
+        self.uniform_temporal_subsample = hparams.train.uniform_temporal_subsample_num
 
         if self.filter:
             self._filter = Filter(hparams)
@@ -123,8 +124,27 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             defined_vframes = self.move_transform(defined_vframes)
 
         if not self.filter and not self.temporal_mix:
-            # TODO: 这里的处理方式可能需要根据实际情况调整
-            defined_vframes = self.move_transform(vframes)
+
+            b, c, h, w = vframes.shape
+            t = self.uniform_temporal_subsample
+            valid_frame_count = (b // t) * t  # 向下取整
+
+            if b != valid_frame_count:
+                print(f"[Warning] Discarding {b - valid_frame_count} extra frames")
+
+            video = vframes[:valid_frame_count]  # 舍弃多余帧
+
+            B = valid_frame_count // t
+            clips = []
+
+            for i in range(B):
+                clip = video[i * t : (i + 1) * t]  # (t, c, h, w)
+                clip = clip.permute(1, 0, 2, 3)  # (c, t, h, w)
+                clips.append(clip)
+
+            video = torch.stack(clips, dim=0)  # (B, c, t, h, w)
+
+            defined_vframes = self.move_transform(video)
 
         sample_info_dict = {
             "video": defined_vframes,

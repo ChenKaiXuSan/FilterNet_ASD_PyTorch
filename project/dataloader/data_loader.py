@@ -53,6 +53,8 @@ class WalkDataModule(LightningDataModule):
         self._num_workers = opt.data.num_workers
         self._img_size = opt.data.img_size
 
+        self._uniform_sample = opt.train.uniform_temporal_subsample_num
+
         # * this is the dataset idx, which include the train/val dataset idx.
         self._dataset_idx = dataset_idx
         self._class_num = opt.model.model_class_num
@@ -145,21 +147,14 @@ class WalkDataModule(LightningDataModule):
                     )
 
         video = torch.cat(batch_video, dim=0)
-        if video.dim() == 4:
-            video = video.unsqueeze(2)  # add temporal dimension
-        elif video.dim() == 5:
-            b, c, t, h, w = video.shape
-        else:
-            raise ValueError(
-                f"video shape is not correct, expect 4 or 5 dims, but got {video.dim()}"
-            )
+        label = torch.tensor(batch_label, dtype=torch.float32)
 
         # video, b, c, t, h, w, which include the video frame from sample info
         # label, b, which include the video frame from sample info
         # sample info, the raw sample info from dataset
         return {
             "video": video,
-            "label": torch.tensor(batch_label),
+            "label": label,
             "info": batch,
         }
 
