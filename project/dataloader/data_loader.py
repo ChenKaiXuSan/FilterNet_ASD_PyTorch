@@ -144,11 +144,21 @@ class WalkDataModule(LightningDataModule):
                         disease_to_num_mapping_Dict[self._class_num]["non-ASD"]
                     )
 
+        video = torch.cat(batch_video, dim=0)
+        if video.dim() == 4:
+            video = video.unsqueeze(2)  # add temporal dimension
+        elif video.dim() == 5:
+            b, c, t, h, w = video.shape
+        else:
+            raise ValueError(
+                f"video shape is not correct, expect 4 or 5 dims, but got {video.dim()}"
+            )
+
         # video, b, c, t, h, w, which include the video frame from sample info
         # label, b, which include the video frame from sample info
         # sample info, the raw sample info from dataset
         return {
-            "video": torch.cat(batch_video, dim=0),
+            "video": video,
             "label": torch.tensor(batch_label),
             "info": batch,
         }
