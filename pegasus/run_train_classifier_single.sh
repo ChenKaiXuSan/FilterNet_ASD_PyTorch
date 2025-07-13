@@ -32,4 +32,4 @@ echo "Current virtual environment: $(which python)"
 root_path=/work/SKIING/chenkaixu/data/asd_dataset
 
 # === 运行你的训练脚本（Hydra 参数可以加在后面）===
-python -m project.main data.root_path=${root_path} train.backbone=3dcnn train.fold=3 train.filter=false train.temporal_mix=true
+python -m project.main data.root_path=${root_path} train.backbone=3dcnn train.fold=5 train.filter=false train.temporal_mix=true
