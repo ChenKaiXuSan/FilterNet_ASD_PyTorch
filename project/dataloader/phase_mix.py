@@ -286,4 +286,8 @@ class PhaseMix(object):
             second_phase_sorted_idx,
         )
 
+        # * t, c, h, w -> c, t, h, w
+        for i in range(len(fused_vframes)):
+            fused_vframes[i] = fused_vframes[i].permute(1, 0, 2, 3)
+
         return fused_vframes
