@@ -141,6 +141,53 @@ class PhaseMix(object):
 
         return cropped_frame_list
 
+    @staticmethod
+    def filter_video_frames(
+        video_tensor: torch.Tensor,
+        phase_sorted_idx: List[List[int]],
+        uniform_temporal_subsample: int = 8,
+    ) -> Tuple[torch.Tensor, List[List[int]]]:
+        """
+        Filter video frames based on sorted phase indices and uniform temporal subsampling.
+
+        Args:
+            video_tensor (torch.Tensor): Tensor of shape (B, T, C, H, W)
+            phase_sorted_idx (List[List[int]]): Frame indices per sample.
+            uniform_temporal_subsample (int): Target number of frames.
+
+        Returns:
+            Tuple[torch.Tensor, List[List[int]]]: Filtered video tensor (B, S, C, H, W), and used indices.
+        """
+        res_batch_frames = []
+        used_indices = []
+
+        B = len(phase_sorted_idx)
+
+        assert B == len(video_tensor), "Batch size mismatch"
+
+        for i in range(B):
+            frame_indices = phase_sorted_idx[i]
+            num_frames = len(frame_indices)
+
+            if num_frames >= uniform_temporal_subsample:
+                # 按照已有顺序取前 uniform_temporal_subsample 个并升序排列
+                selected_idx = sorted(frame_indices[:uniform_temporal_subsample])
+            else:
+                # 均匀补帧：用重复或插值策略（此处为重复）
+                repeat_idx = (
+                    torch.linspace(0, num_frames - 1, steps=uniform_temporal_subsample)
+                    .long()
+                    .tolist()
+                )
+                selected_idx = [frame_indices[j] for j in repeat_idx]
+
+            used_indices.append(selected_idx)
+
+            selected_frames = [video_tensor[i][f] for f in selected_idx]
+            res_batch_frames.append(torch.stack(selected_frames, dim=1))  # (C, T, H, W)
+
+        return torch.stack(res_batch_frames, dim=0), used_indices  # (B, C, T, H, W)
+
     def fuse_frames(
         self,
         processed_first_phase: List[torch.Tensor],
@@ -248,19 +295,15 @@ class PhaseMix(object):
             video_tensor, gait_cycle_index, 1
         )
 
-        first_phase_filtered_scores = filter_info["first_phase"][
-            f"fold{self.current_fold}"
-        ]["filtered_scores"]
-        first_phase_sorted_idx = filter_info["first_phase"][f"fold{self.current_fold}"][
-            "sorted_idx"
+        first_phase_filtered_scores = filter_info["first_phase"]["fold0"][
+            "filtered_scores"
         ]
+        first_phase_sorted_idx = filter_info["first_phase"]["fold0"]["sorted_idx"]
 
-        second_phase_filtered_scores = filter_info["second_phase"][
-            f"fold{self.current_fold}"
-        ]["filtered_scores"]
-        second_phase_sorted_idx = filter_info["second_phase"][
-            f"fold{self.current_fold}"
-        ]["sorted_idx"]
+        second_phase_filtered_scores = filter_info["second_phase"]["fold0"][
+            "filtered_scores"
+        ]
+        second_phase_sorted_idx = filter_info["second_phase"]["fold0"]["sorted_idx"]
 
         # * keep the frame pack length equal.
         if len(first_phase) > len(second_phase):
