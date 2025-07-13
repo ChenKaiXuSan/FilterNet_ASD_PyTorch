@@ -123,6 +123,7 @@ class LabeledGaitVideoDataset(torch.utils.data.Dataset):
             defined_vframes = self.move_transform(defined_vframes)
 
         if not self.filter and not self.temporal_mix:
+            # TODO: 这里的处理方式可能需要根据实际情况调整
             defined_vframes = self.move_transform(vframes)
 
         sample_info_dict = {
