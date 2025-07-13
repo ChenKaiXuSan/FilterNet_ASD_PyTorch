@@ -1,9 +1,8 @@
 #!/bin/bash
 #PBS -A SKIING                        # ✅ 项目名（必须修改）
 #PBS -q gen_S                        # ✅ 队列名（gpu / debug / gen_S）
-#PBS -l elapstim_req=24:00:00         # ⏱ 运行时间限制（最多 24 小时）
-#PBS -N train_classifier                     # 🏷 作业名称
-#PBS -t 0-3
+#PBS -l elapstim_req=03:00:00         # ⏱ 运行时间限制（最多 24 小时）
+#PBS -N train_classifier_single                     # 🏷 作业名称
 #PBS -o logs/pegasus/train_classifier_out.log            # 📤 标准输出日志
 #PBS -e logs/pegasus/train_classifier_err.log            # ❌ 错误输出日志
 
@@ -29,17 +28,8 @@ echo "Total RAM: $(free -h | grep Mem | awk '{print $2}')"
 echo "Current Python version: $(python --version)"
 echo "Current virtual environment: $(which python)"
 
-# 映射关系：数字 → 融合方式名称
-backbone=(3dcnn 2dcnn cnn_lstm two_stream)
-
-# 用数字选择（比如从命令行传入，或固定指定）
-fuse_index=${PBS_SUBREQNO}
-phase_method=${backbone[$fuse_index]}
-
-echo "Selected backbone: $phase_method"
-
 # params 
 root_path=/work/SKIING/chenkaixu/data/asd_dataset
 
 # === 运行你的训练脚本（Hydra 参数可以加在后面）===
-python -m project.main data.root_path=${root_path} train.backbone=${phase_method} train.fold=5 train.filter=true 
+python -m project.main data.root_path=${root_path} train.backbone=3dcnn train.fold=3 train.filter=false train.temporal_mix=true
